@@ -5,7 +5,7 @@
 ![Flask 3](https://img.shields.io/badge/Flask-3-blue.svg)
 
 # Safe Auth Service
-Grants JWT tokens based on ERC-4361 authentication.
+Grants JWT tokens to be used across the Safe Core{API} infrastructure. It supports ERC-4361 authentication.
 
 ## Configuration
 ```bash
