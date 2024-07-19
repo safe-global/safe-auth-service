@@ -1,0 +1,101 @@
+name: Python CI
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+  release:
+    types: [ released ]
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install pre-commit
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+  test-app:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        cache-dependency-path: 'requirements/*.txt'
+    - name: Install dependencies
+      run: |
+        pip install wheel
+        pip install -r requirements/dev.txt coveralls
+      env:
+        PIP_USE_MIRRORS: true
+    - name: Run mypy
+      run: mypy .
+    - name: Run tests and coverage
+      run: |
+        coverage run --source=$SOURCE_FOLDER -m pytest -rxXs
+      env:
+        SOURCE_FOLDER: flaskr
+    - name: Send results to coveralls
+      continue-on-error: true  # Ignore coveralls problems
+      run: coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for coveralls
+
+  ecr-deploy:
+    runs-on: ubuntu-latest
+    needs: test-app
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main')  || (github.event_name == 'release' && github.event.action == 'released')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and tag images for Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: safe-auth-service
+          IMAGE_TAG: staging
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . --build-arg BUILDKIT_INLINE_CACHE=1
+      - name: Tag release and latest images for Amazon ECR
+        if: (github.event_name == 'release' && github.event.action == 'released')
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: safe-auth-service
+          IMAGE_TAG: staging
+          RELEASE_IMAGE_TAG: ${{ github.event.release.tag_name }}
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:${RELEASE_IMAGE_TAG}
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+      - name: Push images to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: safe-auth-service
+          DOCKER_BUILDKIT: 1
+        run: docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
