@@ -51,7 +51,7 @@ jobs:
       run: |
         coverage run --source=$SOURCE_FOLDER -m pytest -rxXs
       env:
-        SOURCE_FOLDER: flaskr
+        SOURCE_FOLDER: app
     - name: Send results to coveralls
       continue-on-error: true  # Ignore coveralls problems
       run: coveralls --service=github
