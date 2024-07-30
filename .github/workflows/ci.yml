@@ -58,44 +58,82 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Required for coveralls
 
-  ecr-deploy:
+  docker-deploy:
     runs-on: ubuntu-latest
-    needs: test-app
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main')  || (github.event_name == 'release' && github.event.action == 'released')
+    needs:
+      - linting
+      - test-app
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || (github.event_name == 'release' && github.event.action == 'released')
     steps:
-      - uses: actions/checkout@v4
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Build and tag images for Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: safe-auth-service
-          IMAGE_TAG: staging
-          DOCKER_BUILDKIT: 1
-        run: |
-          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . --build-arg BUILDKIT_INLINE_CACHE=1
-      - name: Tag release and latest images for Amazon ECR
-        if: (github.event_name == 'release' && github.event.action == 'released')
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: safe-auth-service
-          IMAGE_TAG: staging
-          RELEASE_IMAGE_TAG: ${{ github.event.release.tag_name }}
-          DOCKER_BUILDKIT: 1
-        run: |
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:${RELEASE_IMAGE_TAG}
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-      - name: Push images to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: safe-auth-service
-          DOCKER_BUILDKIT: 1
-        run: docker push -a $ECR_REGISTRY/$ECR_REPOSITORY
+    - uses: actions/checkout@v4
+    - uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+    - uses: docker/setup-buildx-action@v3
+    - name: Dockerhub login
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Deploy Master
+      if: github.ref == 'refs/heads/main'
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/web/Dockerfile
+        push: true
+        tags: safeglobal/safe-transaction-service:staging
+        platforms: |
+          linux/amd64
+          linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    - name: Deploy Develop
+      if: github.ref == 'refs/heads/develop'
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/web/Dockerfile
+        push: true
+        tags: safeglobal/safe-transaction-service:develop
+        platforms: |
+          linux/amd64
+          linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    - name: Deploy Tag
+      if: (github.event_name == 'release' && github.event.action == 'released')
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/web/Dockerfile
+        push: true
+        tags: |
+          safeglobal/safe-transaction-service:${{ github.event.release.tag_name }}
+          safeglobal/safe-transaction-service:latest
+        platforms: |
+          linux/amd64
+          linux/arm64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  autodeploy:
+    runs-on: ubuntu-latest
+    needs: [docker-deploy]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    steps:
+    - uses: actions/checkout@v4
+    - name: Deploy Staging
+      if: github.ref == 'refs/heads/main'
+      run: bash scripts/autodeploy.sh
+      env:
+        AUTODEPLOY_URL: ${{ secrets.AUTODEPLOY_URL }}
+        AUTODEPLOY_TOKEN: ${{ secrets.AUTODEPLOY_TOKEN }}
+        TARGET_ENV: "staging"
+    - name: Deploy Develop
+      if: github.ref == 'refs/heads/develop'
+      run: bash scripts/autodeploy.sh
+      env:
+        AUTODEPLOY_URL: ${{ secrets.AUTODEPLOY_URL }}
+        AUTODEPLOY_TOKEN: ${{ secrets.AUTODEPLOY_TOKEN }}
+        TARGET_ENV: "develop"
