@@ -6,6 +6,9 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+import redis
+
+from .settings import Settings
 from .version import VERSION
 
 app = FastAPI(
@@ -15,6 +18,10 @@ app = FastAPI(
     redoc_url=None,
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+settings = Settings()
+redis = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 
 class About(BaseModel):
