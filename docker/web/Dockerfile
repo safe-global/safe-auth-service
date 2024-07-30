@@ -3,6 +3,7 @@ FROM python:3.12-slim
 EXPOSE 8888/tcp
 ARG APP_HOME=/app
 WORKDIR ${APP_HOME}
+ENV PYTHONUNBUFFERED=1
 
 COPY requirements/prod.txt ./requirements.txt
 RUN set -ex \
@@ -23,5 +24,14 @@ RUN set -ex \
         -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
         -exec rm -rf '{}' +
 
-COPY . .
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8888", "--proxy-headers"]
+
+# /nginx mount point must be created before so it doesn't have root permissions
+# ${APP_HOME} root folder will not be updated by COPY --chown, so permissions need to be adjusted
+RUN groupadd -g 999 python && \
+    useradd -u 999 -r -g python python && \
+    mkdir -p /nginx && \
+    chown -R python:python /nginx ${APP_HOME}
+COPY --chown=python:python . .
+
+# Use numeric ids so kubernetes identifies the user correctly
+USER 999:999
