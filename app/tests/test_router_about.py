@@ -2,12 +2,12 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from app import VERSION
-from app.main import app
+from .. import VERSION
+from ..main import app
 
 
 class TestRouterAbout(unittest.TestCase):
-    client = None
+    client: TestClient
 
     @classmethod
     def setUpClass(cls):

@@ -2,4 +2,5 @@ fastapi[all]==0.111.1
 hiredis==3.0.0
 pydantic-settings==2.3.4
 redis[hiredis]==5.0.7
+safe-eth-py==6.0.0b35
 siwe==4.2.0

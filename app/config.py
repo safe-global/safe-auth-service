@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         extra="allow",
         case_sensitive=True,
     )
-    REDIS_URL: str
+    REDIS_URL: str = "redis://"
     NONCE_TTL_SECONDS: int = 60 * 10
 
 

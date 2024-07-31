@@ -2,11 +2,11 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from app.main import app
+from ..main import app
 
 
 class TestRouterDefault(unittest.TestCase):
-    client = None
+    client: TestClient
 
     @classmethod
     def setUpClass(cls):
@@ -17,6 +17,10 @@ class TestRouterDefault(unittest.TestCase):
         self.assertEqual(response.status_code, 307)
         self.assertTrue(response.has_redirect_location)
         self.assertEqual(response.headers["location"], "/docs")
+
+    def test_view_redoc(self):
+        response = self.client.get("/redoc", follow_redirects=False)
+        self.assertEqual(response.status_code, 200)
 
     def test_view_health(self):
         response = self.client.get("/health")
