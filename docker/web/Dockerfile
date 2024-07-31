@@ -24,8 +24,6 @@ RUN set -ex \
         -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
         -exec rm -rf '{}' +
 
-# Copy env file to container
-COPY .env.docker ${APP_HOME}/.env
 
 # /nginx mount point must be created before so it doesn't have root permissions
 # ${APP_HOME} root folder will not be updated by COPY --chown, so permissions need to be adjusted
@@ -37,3 +35,6 @@ COPY --chown=python:python . .
 
 # Use numeric ids so kubernetes identifies the user correctly
 USER 999:999
+
+# Set environment variables
+ENV ENV_FILE=.env.docker
