@@ -2,8 +2,8 @@ import unittest
 
 from fastapi.testclient import TestClient
 
-from .. import VERSION
-from ..main import app
+from ... import VERSION
+from ...main import app
 
 
 class TestRouterAbout(unittest.TestCase):

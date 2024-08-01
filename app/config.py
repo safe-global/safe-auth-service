@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     )
     REDIS_URL: str = "redis://"
     NONCE_TTL_SECONDS: int = 60 * 10
+    DEFAULT_SIWE_MESSAGE_STATEMENT: str = (
+        "Welcome to Safe! I accept the Terms of Use: https://safe.global/terms."
+    )
 
 
 settings = Settings()

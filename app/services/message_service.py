@@ -5,11 +5,7 @@ from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
 from gnosis.eth.utils import fast_to_checksum_address
 
 from ..config import settings
-from .nonce_repository import get_nonce_repository
-
-DEFAULT_STATEMENT = (
-    "Welcome to Safe! I accept the Terms of Use: https://safe.global/terms."
-)
+from .nonce_service import generate_nonce
 
 
 def create_siwe_message(
@@ -25,12 +21,12 @@ def create_siwe_message(
     :param statement: OPTIONAL. A human-readable assertion to show in the message that the user will sign.
     :return: EIP-4361 formatted message, ready for EIP-191 signing.
     """
-    nonce = get_nonce_repository().generate_nonce()
+    nonce = generate_nonce()
 
     message = SiweMessage(
         domain=domain,
         address=fast_to_checksum_address(address),
-        statement=statement or DEFAULT_STATEMENT,
+        statement=statement or settings.DEFAULT_SIWE_MESSAGE_STATEMENT,
         uri=uri,
         version=VersionEnum.one,
         chain_id=chain_id,

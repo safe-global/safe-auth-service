@@ -1,14 +1,19 @@
 import unittest
 from unittest import mock
+from unittest.mock import MagicMock
 
 from siwe.siwe import SiweMessage, VersionEnum
 
-from ..siwe.message_service import DEFAULT_STATEMENT, create_siwe_message
+from ...config import settings
+from ...services.message_service import create_siwe_message
 
 
 class TestSiweMessageService(unittest.TestCase):
-    @mock.patch("app.siwe.nonce_repository.NonceRepository.generate_nonce")
-    def test_create_siwe_message(self, mock_generate_nonce):
+    @mock.patch("redis.Redis.from_url")
+    @mock.patch("siwe.generate_nonce")
+    def test_create_siwe_message(
+        self, mock_generate_nonce: MagicMock, mock_redis_from_url: MagicMock
+    ):
         test_domain = "example.com"
         test_address = "0x32Be343B94f860124dC4fEe278FDCBD38C102D88"
         test_chain_id = 1
@@ -46,8 +51,11 @@ class TestSiweMessageService(unittest.TestCase):
 
         self.assertEqual(message_str, expected_message.prepare_message())
 
-    @mock.patch("app.siwe.nonce_repository.NonceRepository.generate_nonce")
-    def test_create_siwe_message_without_statement(self, mock_generate_nonce):
+    @mock.patch("redis.Redis.from_url")
+    @mock.patch("siwe.generate_nonce")
+    def test_create_siwe_message_without_statement(
+        self, mock_generate_nonce: MagicMock, mock_redis_from_url: MagicMock
+    ):
         test_domain = "example.com"
         test_address = "0x32Be343B94f860124dC4fEe278FDCBD38C102D88"
         test_chain_id = 1
@@ -72,7 +80,7 @@ class TestSiweMessageService(unittest.TestCase):
         expected_message = SiweMessage(
             domain=test_domain,
             address=test_address,
-            statement=DEFAULT_STATEMENT,
+            statement=settings.DEFAULT_SIWE_MESSAGE_STATEMENT,
             uri=test_uri,
             version=VersionEnum.one,
             chain_id=test_chain_id,

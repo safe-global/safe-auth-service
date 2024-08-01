@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
 from ..models import Nonce, SiweMessage, SiweMessageRequest
-from ..siwe.message_service import create_siwe_message
-from ..siwe.nonce_repository import get_nonce_repository
+from ..services.message_service import create_siwe_message
+from ..services.nonce_service import generate_nonce
 
 router = APIRouter(
     prefix="/auth",
@@ -12,7 +12,7 @@ router = APIRouter(
 
 @router.get("/nonce", response_model=Nonce)
 async def get_nonce() -> "Nonce":
-    return Nonce(nonce=get_nonce_repository().generate_nonce())
+    return Nonce(nonce=generate_nonce())
 
 
 @router.post("/messages", response_model=SiweMessage)

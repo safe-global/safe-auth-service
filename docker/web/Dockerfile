@@ -35,6 +35,3 @@ COPY --chown=python:python . .
 
 # Use numeric ids so kubernetes identifies the user correctly
 USER 999:999
-
-# Set environment variables
-ENV ENV_FILE=.env.docker
