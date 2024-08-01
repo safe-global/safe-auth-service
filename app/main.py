@@ -6,7 +6,7 @@ from .routers import about, auth, default
 
 app = FastAPI(
     title="Safe Auth Service",
-    description="API to grant JWT tokens for use across the Safe Core{API} infrastructure.",
+    description="API to grant JWT tokens for using across the Safe Core{API} infrastructure.",
     version=VERSION,
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
