@@ -22,8 +22,11 @@ class TestRouterDefault(unittest.TestCase):
         response = self.client.get("/redoc", follow_redirects=False)
         self.assertEqual(response.status_code, 200)
 
+    def test_view_swagger_ui(self):
+        response = self.client.get("/docs", follow_redirects=False)
+        self.assertEqual(response.status_code, 200)
+
     def test_view_health(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), "OK")
-        assert response.json() == "OK"
