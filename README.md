@@ -1,4 +1,4 @@
-![Build Status](https://github.com/safe-global/safe-auth-service/workflows/Python%20CI/badge.svg?branch=main)
+[![Python CI](https://github.com/safe-global/safe-auth-service/actions/workflows/ci.yml/badge.svg)](https://github.com/safe-global/safe-auth-service/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/safe-global/safe-auth-service/badge.svg?branch=main)](https://coveralls.io/github/safe-global/safe-auth-service?branch=main)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 ![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)
