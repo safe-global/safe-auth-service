@@ -1,4 +1,4 @@
-fastapi[all]==0.111.1
+fastapi[all]==0.112.0
 pydantic-settings==2.4.0
 redis[hiredis]==5.0.7
 safe-eth-py==6.0.0b35
