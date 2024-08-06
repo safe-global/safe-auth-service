@@ -1,5 +1,4 @@
 from fastapi import APIRouter, FastAPI
-from fastapi.staticfiles import StaticFiles
 
 from . import VERSION
 from .routers import about, auth, default
@@ -8,8 +7,9 @@ app = FastAPI(
     title="Safe Auth Service",
     description="API to grant JWT tokens for using across the Safe Core{API} infrastructure.",
     version=VERSION,
+    docs_url=None,
+    redoc_url=None,
 )
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Router configuration
 api_v1_router = APIRouter(
