@@ -20,5 +20,11 @@ class Settings(BaseSettings):
         "Welcome to Safe! I accept the Terms of Use: https://safe.global/terms."
     )
 
+    # https://pyjwt.readthedocs.io/en/stable/usage.html#encoding-decoding-tokens-with-rs256-rsa
+    JWT_PRIVATE_KEY: str = ""  # RSA private key -----BEGIN ...
+    JWT_ISSUER: str = "safe-auth-service"
+    JWT_EXPIRATION_SECONDS: int = 24 * 60 * 60
+    JWT_COOKIE_NAME: str = "safe_access_token"
+
 
 settings = Settings()

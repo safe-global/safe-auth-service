@@ -1,10 +1,8 @@
 import unittest
 
-from pydantic import ValidationError
+from pydantic import HttpUrl, ValidationError
 
-from pydantic_core._pydantic_core import Url
-
-from ..models import Nonce, SiweMessageRequest
+from ..models import Nonce, SiweMessageRequest, SiweMessageVerificationRequest
 
 
 class TestNonce(unittest.TestCase):
@@ -28,7 +26,7 @@ class TestSiweMessageRequest(unittest.TestCase):
             domain="example.com",
             address="0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
             chain_id=1,
-            uri=Url("https://example.com/"),
+            uri=HttpUrl("https://example.com/"),
             statement="Test statement",
         )
         self.assertEqual(siwe_message_request.domain, "example.com")
@@ -45,7 +43,7 @@ class TestSiweMessageRequest(unittest.TestCase):
                 domain="example.com/invalid",
                 address="0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
                 chain_id=1,
-                uri=Url("https://example.com"),
+                uri=HttpUrl("https://example.com"),
             )
 
     def test_invalid_address(self):
@@ -54,7 +52,7 @@ class TestSiweMessageRequest(unittest.TestCase):
                 domain="example.com",
                 address="0xInvalidEthereumAddress",
                 chain_id=1,
-                uri=Url("https://example.com"),
+                uri=HttpUrl("https://example.com"),
                 statement="Test statement",
             )
 
@@ -64,7 +62,7 @@ class TestSiweMessageRequest(unittest.TestCase):
                 domain="example.com",
                 address="0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
                 chain_id=1,
-                uri=Url("invalid-url"),
+                uri=HttpUrl("invalid-url"),
                 statement="Test statement",
             )
 
@@ -73,6 +71,39 @@ class TestSiweMessageRequest(unittest.TestCase):
             domain="example.com",
             address="0x32Be343B94f860124dC4fEe278FDCBD38C102D88",
             chain_id=1,
-            uri=Url("https://example.com"),
+            uri=HttpUrl("https://example.com"),
         )
         self.assertIsNone(siwe_message_request.statement)
+
+
+class TestSiweMessageVerificationRequest(unittest.TestCase):
+    def test_valid_siwe_message_verification_request(self):
+        siwe_message_verification_request = SiweMessageVerificationRequest(
+            message="Test",
+            signature="0x" + "a" * 130,
+        )
+        self.assertEqual(siwe_message_verification_request.message, "Test")
+        self.assertEqual(siwe_message_verification_request.signature, "0x" + "a" * 130)
+
+    def test_invalid_signature(self):
+        with self.assertRaises(ValidationError):
+            SiweMessageVerificationRequest(
+                message="Test",
+                signature="0xa",
+            )
+
+        with self.assertRaises(ValidationError):
+            SiweMessageVerificationRequest(
+                message="Test",
+                signature="a" * 132,
+            )
+
+    def test_invalid_address(self):
+        with self.assertRaises(ValidationError):
+            SiweMessageRequest(
+                domain="example.com",
+                address="0xInvalidEthereumAddress",
+                chain_id=1,
+                uri=HttpUrl("https://example.com"),
+                statement="Test statement",
+            )
