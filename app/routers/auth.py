@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Response, status
 
+from eth_typing import HexStr
+
 from app.config import settings
 
 from ..exceptions import (
@@ -68,24 +70,23 @@ async def request_auth_token(
     try:
         verify_siwe_message(
             message=siwe_message_request.message,
-            signature=siwe_message_request.signature,
+            signature=HexStr(siwe_message_request.signature),
         )
+        siwe_message_info = get_siwe_message_info(siwe_message_request.message)
+        token = create_jwt_token(siwe_message_info)
+
+        response.set_cookie(
+            key=settings.JWT_COOKIE_NAME,
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=settings.JWT_EXPIRATION_SECONDS,
+        )
+        return JwtToken(token=token)
     except InvalidMessageFormatError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except InvalidNonceError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except InvalidSignatureError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
-
-    siwe_message_info = get_siwe_message_info(siwe_message_request.message)
-    token = create_jwt_token(siwe_message_info)
-
-    response.set_cookie(
-        key=settings.JWT_COOKIE_NAME,
-        value=token,
-        httponly=True,
-        secure=True,
-        samesite="lax",
-        max_age=settings.JWT_EXPIRATION_SECONDS,
-    )
-    return JwtToken(token=token)

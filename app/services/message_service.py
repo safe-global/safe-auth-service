@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import siwe
+from eth_typing import HexStr
 from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
 
 from gnosis.eth.utils import fast_to_checksum_address
@@ -47,7 +48,7 @@ def create_siwe_message(
     return message.prepare_message()
 
 
-def verify_siwe_message(message: str, signature: str) -> None:
+def verify_siwe_message(message: str, signature: HexStr) -> None:
     """
     Verifies a Sign-In with Ethereum (SIWE) message and its associated signature.
 
@@ -81,7 +82,7 @@ def get_siwe_message_info(message: str) -> SiweMessageInfo:
 
     :param message: The SIWE message as a string that needs to be parsed.
     :raises InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
-    :return: A `SiweMessageInfo` object or `None` if the message format is invalid.
+    :return: A `SiweMessageInfo` object.
     """
     try:
         siwe_message = SiweMessage.from_message(message)
