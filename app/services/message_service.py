@@ -1,11 +1,19 @@
 from datetime import UTC, datetime, timedelta
 
+import siwe
+from eth_typing import HexStr
 from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
 
 from gnosis.eth.utils import fast_to_checksum_address
 
 from ..config import settings
-from .nonce_service import generate_nonce
+from ..exceptions import (
+    InvalidMessageFormatError,
+    InvalidNonceError,
+    InvalidSignatureError,
+)
+from ..models import SiweMessageInfo
+from .nonce_service import clear_nonce, generate_nonce, is_nonce_valid
 
 
 def create_siwe_message(
@@ -32,9 +40,54 @@ def create_siwe_message(
         chain_id=chain_id,
         nonce=nonce,
         issued_at=ISO8601Datetime.from_datetime(datetime.now(UTC)),
-        valid_until=ISO8601Datetime.from_datetime(
+        expiration_time=ISO8601Datetime.from_datetime(
             datetime.now(UTC) + timedelta(seconds=settings.NONCE_TTL_SECONDS)
         ),
     )
 
     return message.prepare_message()
+
+
+def verify_siwe_message(message: str, signature: HexStr) -> None:
+    """
+    Verifies a Sign-In with Ethereum (SIWE) message and its associated signature.
+
+    :param message: The SIWE message as a string that needs to be verified.
+    :param signature: The cryptographic signature associated with the SIWE message.
+    :raises InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
+    :raises InvalidNonceError: If the nonce included in the SIWE message is invalid or expired.
+    :raises InvalidSignatureError: If the provided signature does not match the SIWE message.
+    :return: None. If no exceptions are raised, the message and signature are considered valid
+        and the nonce is cleared from the cache to prevent reuse.
+    """
+    try:
+        siwe_message = SiweMessage.from_message(message)
+    except ValueError:
+        raise InvalidMessageFormatError("The SIWE message format is invalid.")
+
+    if not is_nonce_valid(siwe_message.nonce):
+        raise InvalidNonceError("The nonce provided in the SIWE message is invalid.")
+
+    try:
+        siwe_message.verify(signature=signature)
+    except siwe.VerificationError:
+        raise InvalidSignatureError("The SIWE signature is invalid.")
+
+    clear_nonce(siwe_message.nonce)
+
+
+def get_siwe_message_info(message: str) -> SiweMessageInfo:
+    """
+    Extracts essential information from a Sign-In with Ethereum (SIWE) message.
+
+    :param message: The SIWE message as a string that needs to be parsed.
+    :raises InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
+    :return: A `SiweMessageInfo` object.
+    """
+    try:
+        siwe_message = SiweMessage.from_message(message)
+        return SiweMessageInfo(
+            chain_id=siwe_message.chain_id, signer_address=siwe_message.address
+        )
+    except ValueError:
+        raise InvalidMessageFormatError("The SIWE message format is invalid.")

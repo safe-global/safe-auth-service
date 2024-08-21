@@ -15,7 +15,7 @@ class Nonce(BaseModel):
 
 class SiweMessageRequest(BaseModel):
     domain: str = Field(pattern="^[^/?#]+$", examples=["domain.com"])
-    address: str
+    address: str = Field(examples=["0xa..."])
     chain_id: int
     uri: AnyUrl
     statement: Optional[str] = Field(default=None)
@@ -29,3 +29,23 @@ class SiweMessageRequest(BaseModel):
 
 class SiweMessage(BaseModel):
     message: str
+
+
+class SiweMessageInfo(BaseModel):
+    chain_id: int
+    signer_address: str
+
+
+class SiweMessageVerificationRequest(BaseModel):
+    message: str
+    signature: str = Field(
+        min_length=132, pattern=r"^0x[a-fA-F0-9]+$", examples=["0xa..."]
+    )
+
+
+class JwtToken(BaseModel):
+    token: str
+
+
+class APIErrorResponse(BaseModel):
+    detail: str
