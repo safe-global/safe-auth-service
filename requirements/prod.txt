@@ -1,4 +1,4 @@
-fastapi[all]==0.112.2
+fastapi[all]==0.114.0
 pydantic-settings==2.4.0
 pyjwt[crypto]==2.9.0
 redis[hiredis]==5.0.8
