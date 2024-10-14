@@ -2,9 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 import siwe
 from eth_typing import HexStr
+from safe_eth.eth.utils import fast_to_checksum_address
 from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
-
-from gnosis.eth.utils import fast_to_checksum_address
 
 from ..config import settings
 from ..exceptions import (
