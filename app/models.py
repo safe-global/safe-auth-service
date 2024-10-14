@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import AnyUrl, BaseModel, Field, field_validator
 
-from gnosis.eth.utils import fast_is_checksum_address
+from safe_eth.eth.utils import fast_is_checksum_address
 
 
 class About(BaseModel):
