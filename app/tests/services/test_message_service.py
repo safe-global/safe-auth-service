@@ -5,6 +5,8 @@ from unittest.mock import MagicMock
 
 from eth_account import Account
 from eth_account.messages import encode_defunct
+from eth_typing import HexStr
+from safe_eth.util.util import to_0x_hex_str
 from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
 
 from ...cache import get_redis
@@ -138,10 +140,10 @@ class TestSiweMessageService(unittest.TestCase):
         )
         message_str = siwe_message.prepare_message()
 
-        private_key = account.key.hex()
+        private_key = to_0x_hex_str(account.key)
         eip191_message = encode_defunct(text=siwe_message.prepare_message())
         signed_message = Account.sign_message(eip191_message, private_key=private_key)
-        signature = signed_message.signature.hex()
+        signature = to_0x_hex_str(signed_message.signature)
 
         # Valid message
         verify_siwe_message(message_str, signature)
@@ -152,10 +154,10 @@ class TestSiweMessageService(unittest.TestCase):
         # Invalid message format
         message_str = "Invalid SIWE message"
 
-        private_key = account.key.hex()
+        private_key = to_0x_hex_str(account.key)
         eip191_message = encode_defunct(text=siwe_message.prepare_message())
         signed_message = Account.sign_message(eip191_message, private_key=private_key)
-        signature = signed_message.signature.hex()
+        signature = to_0x_hex_str(signed_message.signature)
 
         with self.assertRaises(InvalidMessageFormatError):
             verify_siwe_message(message_str, signature)
@@ -175,10 +177,10 @@ class TestSiweMessageService(unittest.TestCase):
         )
         message_str = siwe_message.prepare_message()
 
-        private_key = account.key.hex()
+        private_key = to_0x_hex_str(account.key)
         eip191_message = encode_defunct(text=siwe_message.prepare_message())
         signed_message = Account.sign_message(eip191_message, private_key=private_key)
-        signature = signed_message.signature.hex()
+        signature = to_0x_hex_str(signed_message.signature)
 
         with self.assertRaises(InvalidNonceError):
             verify_siwe_message(message_str, signature)
@@ -198,10 +200,10 @@ class TestSiweMessageService(unittest.TestCase):
         )
         message_str = siwe_message.prepare_message()
 
-        private_key = account.key.hex()
+        private_key = to_0x_hex_str(account.key)
         eip191_message = encode_defunct(text=siwe_message.prepare_message())
         signed_message = Account.sign_message(eip191_message, private_key=private_key)
-        signature = signed_message.signature.hex()
+        signature = to_0x_hex_str(signed_message.signature)
 
         with self.assertRaises(InvalidSignatureError):
             verify_siwe_message(message_str, signature)
@@ -219,7 +221,7 @@ class TestSiweMessageService(unittest.TestCase):
             expiration_time=expiration_time,
         )
         message_str = siwe_message.prepare_message()
-        signature = "0x455aaa"
+        signature = HexStr("0x455aaa")
 
         with self.assertRaises(InvalidSignatureError):
             verify_siwe_message(message_str, signature)
