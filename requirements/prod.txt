@@ -1,6 +1,6 @@
 fastapi[all]==0.115.8
 pydantic-settings==2.6.1
-pyjwt[crypto]==2.10.0
+pyjwt[crypto]==2.10.1
 redis[hiredis]==5.2.0
 safe-eth-py==7.1.1
 siwe==4.4.0
