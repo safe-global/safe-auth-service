@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from eth_account import Account
 from eth_account.messages import encode_defunct
+from safe_eth.util.util import to_0x_hex_str
 
 from ...main import app
 
@@ -75,10 +76,10 @@ class TestRouterAuth(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         obtained_siwe_message = response.json().get("message")
 
-        private_key = account.key.hex()
+        private_key = to_0x_hex_str(account.key)
         eip191_message = encode_defunct(text=obtained_siwe_message)
         signed_message = Account.sign_message(eip191_message, private_key=private_key)
-        signature = signed_message.signature.hex()
+        signature = to_0x_hex_str(signed_message.signature)
 
         jwt_private_key = rsa.generate_private_key(
             public_exponent=65537,
