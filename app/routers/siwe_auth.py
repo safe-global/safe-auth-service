@@ -18,12 +18,11 @@ from ..models import (
     SiweMessageVerificationRequest,
 )
 from ..services.jwt_service import create_jwt_token
-from ..services.message_service import (
+from ..services.siwe_service import (
     create_siwe_message,
     get_siwe_message_info,
-    verify_siwe_message,
+    verify_siwe_message, generate_nonce,
 )
-from ..services.nonce_service import generate_nonce
 
 router = APIRouter(
     prefix="/auth",

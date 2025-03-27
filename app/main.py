@@ -9,11 +9,10 @@ from starlette.responses import Response
 from . import VERSION
 from .datasources.db.connector import (
     _get_database_session_context,
-    db_session,
-    set_database_session_context,
 )
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
-from .routers import about, auth, default
+from .routers import about, default
+from .datasources.db.connector import db_session, set_database_session_context
 
 logger = logging.getLogger()
 
@@ -53,7 +52,6 @@ api_v1_router = APIRouter(
     prefix="/api/v1",
 )
 api_v1_router.include_router(about.router)
-api_v1_router.include_router(auth.router)
 app.include_router(api_v1_router)
 app.include_router(default.router)
 
