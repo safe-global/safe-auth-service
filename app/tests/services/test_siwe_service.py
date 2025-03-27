@@ -9,7 +9,6 @@ from eth_typing import HexStr
 from safe_eth.util.util import to_0x_hex_str
 from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
 
-from ...cache import get_redis
 from ...config import settings
 from ...exceptions import (
     InvalidMessageFormatError,
@@ -22,6 +21,7 @@ from ...services.siwe_service import (
     get_siwe_message_info,
     verify_siwe_message, generate_nonce, is_nonce_valid, clear_nonce, CACHE_NONCE_PREFIX,
 )
+from ...datasources.cache.redis import get_redis
 
 
 class TestSiweMessageService(unittest.TestCase):
