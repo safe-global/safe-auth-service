@@ -2,7 +2,7 @@ import unittest
 
 from pydantic import HttpUrl, ValidationError
 
-from ..models import Nonce, SiweMessageVerificationRequest
+from ..models.siwe_auth import Nonce, SiweMessageVerificationRequest
 from .factories import SiweMessageRequestFactory
 
 

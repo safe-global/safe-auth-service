@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 import jwt
 
 from app.config import settings
-from app.models import SiweMessageInfo
+from app.models.siwe_auth import SiweMessageInfo
 
 
 def create_jwt_token(siwe_message_info: SiweMessageInfo) -> str:
