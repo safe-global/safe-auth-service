@@ -9,19 +9,20 @@ from ..exceptions import (
     InvalidNonceError,
     InvalidSignatureError,
 )
-from ..models import (
-    APIErrorResponse,
+from ..models.siwe_auth import (
     JwtToken,
     Nonce,
     SiweMessage,
     SiweMessageRequest,
     SiweMessageVerificationRequest,
 )
+from ..models.util import APIErrorResponse
 from ..services.jwt_service import create_jwt_token
 from ..services.siwe_service import (
     create_siwe_message,
+    generate_nonce,
     get_siwe_message_info,
-    verify_siwe_message, generate_nonce,
+    verify_siwe_message,
 )
 
 router = APIRouter(

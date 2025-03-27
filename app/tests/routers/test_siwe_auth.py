@@ -2,9 +2,9 @@ import re
 import unittest
 from unittest import mock
 
-import pytest
 from fastapi.testclient import TestClient
 
+import pytest
 import siwe
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa

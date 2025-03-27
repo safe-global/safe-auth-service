@@ -10,25 +10,29 @@ from safe_eth.util.util import to_0x_hex_str
 from siwe.siwe import ISO8601Datetime, SiweMessage, VersionEnum
 
 from ...config import settings
+from ...datasources.cache.redis import get_redis
 from ...exceptions import (
     InvalidMessageFormatError,
     InvalidNonceError,
     InvalidSignatureError,
 )
-from ...models import SiweMessageInfo
+from ...models.siwe_auth import SiweMessageInfo
 from ...services.siwe_service import (
+    CACHE_NONCE_PREFIX,
+    clear_nonce,
     create_siwe_message,
+    generate_nonce,
     get_siwe_message_info,
-    verify_siwe_message, generate_nonce, is_nonce_valid, clear_nonce, CACHE_NONCE_PREFIX,
+    is_nonce_valid,
+    verify_siwe_message,
 )
-from ...datasources.cache.redis import get_redis
 
 
 class TestSiweMessageService(unittest.TestCase):
     @mock.patch("siwe.generate_nonce")
     @mock.patch("redis.Redis.from_url")
     def test_generate_nonce(
-            self, mock_redis_from_url: MagicMock, mock_generate_nonce: MagicMock
+        self, mock_redis_from_url: MagicMock, mock_generate_nonce: MagicMock
     ):
         mock_generate_nonce.return_value = "test_nonce"
         mock_redis_instance = mock_redis_from_url.return_value
