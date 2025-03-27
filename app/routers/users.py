@@ -29,7 +29,10 @@ async def pre_register(user_request: PreRegistrationUser) -> PreRegistrationResp
 )
 async def register(user_request: RegistrationUser) -> RegistrationUserResponse:
     user_uuid = register_user(
-        user_request.email, user_request.password, user_request.token
+        str(user_request.email),
+        user_request.username,
+        user_request.password,
+        user_request.token,
     )
     return RegistrationUserResponse(
         email=user_request.email, username=user_request.username, uuid=user_uuid

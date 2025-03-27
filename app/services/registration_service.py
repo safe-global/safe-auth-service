@@ -1,4 +1,5 @@
 import uuid
+from typing import cast
 
 from ..config import settings
 from ..datasources.cache.redis import get_redis
@@ -30,7 +31,8 @@ def temporary_token_is_valid(email: str, token: str) -> bool:
     Returns:
         `True` if the token is valid
     """
-    return get_redis().get("temporary-token:" + email).decoder() == token
+    cached_token = cast(bytes, get_redis().get("temporary-token:" + email))
+    return cached_token.decode() == token
 
 
 def pre_register_user(email: str) -> str:
