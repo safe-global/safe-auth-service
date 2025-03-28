@@ -5,10 +5,6 @@ from pydantic import AnyUrl, BaseModel, Field, field_validator
 from safe_eth.eth.utils import fast_is_checksum_address
 
 
-class About(BaseModel):
-    version: str
-
-
 class Nonce(BaseModel):
     nonce: str = Field(min_length=8, pattern=r"^[A-Za-z0-9]{8,}$")
 
@@ -45,7 +41,3 @@ class SiweMessageVerificationRequest(BaseModel):
 
 class JwtToken(BaseModel):
     token: str
-
-
-class APIErrorResponse(BaseModel):
-    detail: str

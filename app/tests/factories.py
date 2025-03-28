@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import AnyUrl, HttpUrl
 
-from ..models import SiweMessageRequest
+from app.models.siwe_auth import SiweMessageRequest
 
 
 class SiweMessageRequestFactory:
