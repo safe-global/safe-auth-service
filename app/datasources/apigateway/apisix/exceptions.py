@@ -1,0 +1,2 @@
+class ApisixRequestError(Exception):
+    pass
