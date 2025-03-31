@@ -14,6 +14,7 @@ class Settings(BaseSettings):
         extra="allow",
         case_sensitive=True,
     )
+    TEST: bool = False
     REDIS_URL: str = "redis://"
     NONCE_TTL_SECONDS: int = 60 * 10
     DEFAULT_SIWE_MESSAGE_STATEMENT: str = (
@@ -25,6 +26,9 @@ class Settings(BaseSettings):
     JWT_ISSUER: str = "safe-auth-service"
     JWT_EXPIRATION_SECONDS: int = 24 * 60 * 60
     JWT_COOKIE_NAME: str = "safe_access_token"
+    DATABASE_URL: str = "psql://postgres:"
+    DATABASE_POOL_CLASS: str = "AsyncAdaptedQueuePool"
+    DATABASE_POOL_SIZE: int = 10
 
 
 settings = Settings()

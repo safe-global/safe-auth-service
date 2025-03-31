@@ -12,6 +12,19 @@ services:
       - nginx-shared:/nginx
     depends_on:
       - web
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      timeout: 5s
+      retries: 3
+
   web:
     build:
       context: .

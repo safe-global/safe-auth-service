@@ -57,6 +57,11 @@ jobs:
         PIP_USE_MIRRORS: true
     - name: Run mypy
       run: mypy .
+    - name: Run database migrations
+      run: |
+        alembic upgrade head
+      env:
+        ENV_FILE: .env.test
     - name: Run tests and coverage
       run: |
         coverage run --source=$SOURCE_FOLDER -m pytest -rxXs
