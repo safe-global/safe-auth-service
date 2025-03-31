@@ -2,9 +2,11 @@ import logging
 from typing import Any
 
 import aiohttp
+from aiohttp import ClientTimeout
 from safe_eth.util.http import build_full_url
 
 from ....config import settings
+from ....models import Consumer, ConsumerGroup
 from ..api_gateway_client import ApiGatewayClient
 from ..exceptions import ApiGatewayRequestError
 
@@ -36,11 +38,16 @@ class ApisixClient(ApiGatewayClient):
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
+
+        headers = {}
+        if self.api_key:
+            headers["X-API-KEY"] = self.api_key
+
         try:
             response = await self.async_session.get(
                 full_url,
-                headers={"X-API-KEY": self.api_key},
-                timeout=self.request_timeout,
+                headers=headers,
+                timeout=ClientTimeout(total=self.request_timeout),
             )
         except (ValueError, IOError) as e:
             raise ApiGatewayRequestError(f"Error fetching {url} from Apisix") from e
@@ -63,12 +70,17 @@ class ApisixClient(ApiGatewayClient):
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
+
+        headers = {"Content-type": "application/json"}
+        if self.api_key:
+            headers["X-API-KEY"] = self.api_key
+
         try:
             response = await self.async_session.put(
                 full_url,
                 json=payload,
-                headers={"Content-type": "application/json", "X-API-KEY": self.api_key},
-                timeout=self.request_timeout,
+                headers=headers,
+                timeout=ClientTimeout(total=self.request_timeout),
             )
         except (ValueError, IOError) as e:
             raise ApiGatewayRequestError(
@@ -93,12 +105,17 @@ class ApisixClient(ApiGatewayClient):
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
+
+        headers = {"Content-type": "application/json"}
+        if self.api_key:
+            headers["X-API-KEY"] = self.api_key
+
         try:
             response = await self.async_session.patch(
                 full_url,
                 json=payload,
-                headers={"Content-type": "application/json", "X-API-KEY": self.api_key},
-                timeout=self.request_timeout,
+                headers=headers,
+                timeout=ClientTimeout(total=self.request_timeout),
             )
         except (ValueError, IOError) as e:
             raise ApiGatewayRequestError(
@@ -120,11 +137,16 @@ class ApisixClient(ApiGatewayClient):
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
+
+        headers = {"Content-type": "application/json"}
+        if self.api_key:
+            headers["X-API-KEY"] = self.api_key
+
         try:
             response = await self.async_session.delete(
                 full_url,
-                headers={"X-API-KEY": self.api_key},
-                timeout=self.request_timeout,
+                headers=headers,
+                timeout=ClientTimeout(total=self.request_timeout),
             )
         except (ValueError, IOError) as e:
             logger.error("Error deleting %s", url)
@@ -137,29 +159,45 @@ class ApisixClient(ApiGatewayClient):
 
         return response
 
-    async def get_consumer_groups(self) -> list[dict[str, Any]]:
+    def _parse_consumer_group_reponse(
+        self, consumer_group_data: dict[str, Any]
+    ) -> ConsumerGroup:
+        consumer_group_data_value = consumer_group_data.get("value", {})
+        return ConsumerGroup(
+            name=consumer_group_data_value["id"],
+            description=consumer_group_data_value.get("desc"),
+            labels=consumer_group_data_value.get("labels"),
+            plugins=consumer_group_data_value.get("plugins"),
+        )
+
+    async def get_consumer_groups(self) -> list[ConsumerGroup]:
         """
         Retrieves a list of all consumer groups.
 
-        :return: A list of dictionaries, each containing details of a consumer group.
+        :return: A list of Consumer group instances.
         :raises ApiGatewayRequestError: If there is an error while fetching the consumer groups (e.g., HTTP error, invalid response).
         """
         url = "/apisix/admin/consumer_groups/"
         response = await self._get_request(url)
-        data = await response.json()
-        return data.get("list", [])
+        consumer_groups_list = await response.json()
+        return [
+            self._parse_consumer_group_reponse(consumer_group_data)
+            for consumer_group_data in consumer_groups_list.get("list", [])
+        ]
 
-    async def get_consumer_group(self, consumer_group_name: str) -> dict[str, Any]:
+    async def get_consumer_group(self, consumer_group_name: str) -> ConsumerGroup:
         """
         Retrieves details of a specific consumer group.
 
         :param consumer_group_name: The name of the consumer group.
-        :return: A dictionary containing the consumer group's details.
+        :return: A Consumer group instance.
         :raises ApiGatewayRequestError: If there is an error while fetching the consumer group (e.g., HTTP error, invalid response).
         """
         url = f"/apisix/admin/consumer_groups/{consumer_group_name}"
         response = await self._get_request(url)
-        return await response.json()
+        consumer_group_data = await response.json()
+
+        return self._parse_consumer_group_reponse(consumer_group_data)
 
     async def add_consumer_group(
         self,
@@ -180,7 +218,7 @@ class ApisixClient(ApiGatewayClient):
 
         url = f"/apisix/admin/consumer_groups/{name}"
 
-        data = {"plugins": {}}
+        data: dict[str, Any] = {"plugins": {}}
 
         if labels is not None:
             data["labels"] = labels
@@ -254,30 +292,44 @@ class ApisixClient(ApiGatewayClient):
         response = await self._patch_request(url, data)
         return response.status == 200
 
-    async def get_consumers(self) -> list[dict[str, Any]]:
+    def _parse_consumer_reponse(self, consumer_data: dict[str, Any]) -> Consumer:
+        consumer_data_value = consumer_data.get("value", {})
+        return Consumer(
+            name=consumer_data_value["username"],
+            description=consumer_data_value.get("desc"),
+            labels=consumer_data_value.get("labels"),
+            plugins=consumer_data_value.get("plugins"),
+            consumer_group_name=consumer_data_value.get("group_id"),
+        )
+
+    async def get_consumers(self) -> list[Consumer]:
         """
         Retrieves a list of all consumers.
 
-        :return: A list of dictionaries, where each dictionary contains information about a consumer.
-        Each dictionary represents a consumer and may include details like username, labels, etc.
+        :return: A list of Consumer instances.
         :raises ApiGatewayRequestError: If there is an error while fetching the list of consumers (e.g., HTTP error, invalid response).
         """
         url = "/apisix/admin/consumers/"
         response = await self._get_request(url)
-        data = await response.json()
-        return data.get("list", [])
+        consumers_list = await response.json()
+        return [
+            self._parse_consumer_reponse(consumer_data)
+            for consumer_data in consumers_list.get("list", [])
+        ]
 
-    async def get_consumer(self, consumer_name: str) -> dict[str, Any]:
+    async def get_consumer(self, consumer_name: str) -> Consumer:
         """
         Retrieves the details of a specific consumer by name.
 
         :param consumer_name: The name of the consumer to retrieve.
-        :return: A dictionary containing the details of the consumer (e.g., username, labels, etc.).
+        :return: A Consumer instance.
         :raises ApiGatewayRequestError: If there is an error while fetching the consumer (e.g., HTTP error, invalid response).
         """
         url = f"/apisix/admin/consumers/{consumer_name}"
         response = await self._get_request(url)
-        return await response.json()
+        consumer_data = await response.json()
+
+        return self._parse_consumer_reponse(consumer_data)
 
     async def upsert_consumer(
         self,
@@ -345,10 +397,9 @@ class ApisixClient(ApiGatewayClient):
         consumers = await self.get_consumers()
 
         for consumer in consumers:
-            consumer_info = consumer.get("value", {})
             await self.upsert_consumer(
-                consumer_info.get("consumer_name"),
-                consumer_info.get("description", None),
-                consumer_info.get("labels", None),
-                consumer_info.get("group_id"),
+                consumer.name,
+                consumer.description,
+                consumer.labels,
+                consumer.consumer_group_name,
             )
