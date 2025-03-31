@@ -1,9 +1,10 @@
 import logging
 from typing import Any
 
-import requests
-from safe_eth.util.http import build_full_url, prepare_http_session
+import aiohttp
+from safe_eth.util.http import build_full_url
 
+from ....config import settings
 from ..api_gateway_client import ApiGatewayClient
 from ..exceptions import ApiGatewayRequestError
 
@@ -22,19 +23,21 @@ class ApisixClient(ApiGatewayClient):
         """
         self.base_url = base_url
         self.api_key = api_key
-        self.http_session = prepare_http_session(10, 100)
+        self.async_session = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(limit_per_host=100)
+        )
         self.request_timeout = request_timeout
 
-    def _get_request(self, url: str) -> requests.Response:
+    async def _get_request(self, url: str) -> aiohttp.ClientResponse:
         """
 
         :param url: The URL to send the GET request to.
         :return: The response object from the GET request.
-        :raises ApisixRequestError: If there is an error with the request.
+        :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
         try:
-            response = self.http_session.get(
+            response = await self.async_session.get(
                 full_url,
                 headers={"X-API-KEY": self.api_key},
                 timeout=self.request_timeout,
@@ -44,22 +47,24 @@ class ApisixClient(ApiGatewayClient):
 
         if not response.ok:
             raise ApiGatewayRequestError(
-                f"Error fetching {url} from Apisix: {response.status_code} {response.content!r}"
+                f"Error fetching {url} from Apisix: {response.status} {response.content!r}"
             )
 
         return response
 
-    def _put_request(self, url: str, payload: dict[str, Any]) -> requests.Response:
+    async def _put_request(
+        self, url: str, payload: dict[str, Any]
+    ) -> aiohttp.ClientResponse:
         """
 
         :param url: The URL to send the PUT request to.
         :param payload: The data to be sent in the PUT request.
         :return: The response object from the PUT request.
-        :raises ApisixRequestError: If there is an error with the request.
+        :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
         try:
-            response = self.http_session.put(
+            response = await self.async_session.put(
                 full_url,
                 json=payload,
                 headers={"Content-type": "application/json", "X-API-KEY": self.api_key},
@@ -72,22 +77,24 @@ class ApisixClient(ApiGatewayClient):
 
         if not response.ok:
             raise ApiGatewayRequestError(
-                f"Error creating {url} with payload {payload} in Apisix: {response.status_code} {response.content!r}"
+                f"Error creating {url} with payload {payload} in Apisix: {response.status} {response.content!r}"
             )
 
         return response
 
-    def _patch_request(self, url: str, payload: dict[str, Any]) -> requests.Response:
+    async def _patch_request(
+        self, url: str, payload: dict[str, Any]
+    ) -> aiohttp.ClientResponse:
         """
 
         :param url: The URL to send the PATCH request to.
         :param payload: The data to be sent in the PATCH request.
         :return: The response object from the PATCH request.
-        :raises ApisixRequestError: If there is an error with the request.
+        :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
         try:
-            response = self.http_session.patch(
+            response = await self.async_session.patch(
                 full_url,
                 json=payload,
                 headers={"Content-type": "application/json", "X-API-KEY": self.api_key},
@@ -100,21 +107,21 @@ class ApisixClient(ApiGatewayClient):
 
         if not response.ok:
             raise ApiGatewayRequestError(
-                f"Error updating {url} with payload {payload} in Apisix: {response.status_code} {response.content!r}"
+                f"Error updating {url} with payload {payload} in Apisix: {response.status} {response.content!r}"
             )
 
         return response
 
-    def _delete_request(self, url: str) -> requests.Response:
+    async def _delete_request(self, url: str) -> aiohttp.ClientResponse:
         """
 
         :param url: The URL to send the DELETE request to.
         :return: The response object from the DELETE request.
-        :raises ApisixRequestError: If there is an error with the request.
+        :raises ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
         try:
-            response = self.http_session.delete(
+            response = await self.async_session.delete(
                 full_url,
                 headers={"X-API-KEY": self.api_key},
                 timeout=self.request_timeout,
@@ -125,36 +132,40 @@ class ApisixClient(ApiGatewayClient):
 
         if not response.ok:
             raise ApiGatewayRequestError(
-                f"Error updating {url} in Apisix: {response.status_code} {response.content!r}"
+                f"Error updating {url} in Apisix: {response.status} {response.content!r}"
             )
 
         return response
 
-    def get_consumer_groups(self) -> list[dict[str, Any]]:
+    async def get_consumer_groups(self) -> list[dict[str, Any]]:
         """
         Retrieves a list of all consumer groups.
 
         :return: A list of dictionaries, each containing details of a consumer group.
-        :raises ApisixRequestError: If there is an error while fetching the consumer groups (e.g., HTTP error, invalid response).
+        :raises ApiGatewayRequestError: If there is an error while fetching the consumer groups (e.g., HTTP error, invalid response).
         """
         url = "/apisix/admin/consumer_groups/"
-        response = self._get_request(url)
-        return response.json().get("list", [])
+        response = await self._get_request(url)
+        data = await response.json()
+        return data.get("list", [])
 
-    def get_consumer_group(self, consumer_group_name: str) -> dict[str, Any]:
+    async def get_consumer_group(self, consumer_group_name: str) -> dict[str, Any]:
         """
         Retrieves details of a specific consumer group.
 
         :param consumer_group_name: The name of the consumer group.
         :return: A dictionary containing the consumer group's details.
-        :raises ApisixRequestError: If there is an error while fetching the consumer group (e.g., HTTP error, invalid response).
+        :raises ApiGatewayRequestError: If there is an error while fetching the consumer group (e.g., HTTP error, invalid response).
         """
         url = f"/apisix/admin/consumer_groups/{consumer_group_name}"
-        response = self._get_request(url)
-        return response.json()
+        response = await self._get_request(url)
+        return await response.json()
 
-    def add_consumer_group(
-        self, name: str, description: str, labels: dict[str, str]
+    async def add_consumer_group(
+        self,
+        name: str,
+        description: str | None = None,
+        labels: dict[str, str] | None = None,
     ) -> bool:
         """
         Adds a new consumer group with associated labels.
@@ -164,17 +175,23 @@ class ApisixClient(ApiGatewayClient):
         :param labels: A dictionary of labels to be associated with the consumer group (e.g.,
                        {"version": "v1", "env": "staging"}).
         :return: `True` if the consumer group was successfully added, otherwise `False`.
-        :raises ApisixRequestError: If there is an error while adding the consumer group (e.g., HTTP error, invalid response).
+        :raises ApiGatewayRequestError: If there is an error while adding the consumer group (e.g., HTTP error, invalid response).
         """
 
         url = f"/apisix/admin/consumer_groups/{name}"
 
-        data = {"desc": description, "labels": labels, "plugins": {}}
+        data = {"plugins": {}}
 
-        response = self._put_request(url, data)
-        return response.status_code == 201
+        if labels is not None:
+            data["labels"] = labels
 
-    def update_consumer_group(
+        if description is not None:
+            data["desc"] = description
+
+        response = await self._put_request(url, data)
+        return response.status == 201
+
+    async def update_consumer_group(
         self, name: str, new_description: str, new_labels: dict[str, str]
     ) -> bool:
         """
@@ -185,7 +202,7 @@ class ApisixClient(ApiGatewayClient):
         :param new_labels: A dictionary of labels to be associated with the consumer group (e.g.,
                            {"version": "v2", "build": "16", "env": "production"}).
         :return: `True` if the consumer group was successfully updated, otherwise `False`.
-        :raises ApisixRequestError: If there is an error while updating the consumer group (e.g., HTTP error, invalid response).
+        :raises ApiGatewayRequestError: If there is an error while updating the consumer group (e.g., HTTP error, invalid response).
         """
         url = f"/apisix/admin/consumer_groups/{name}"
 
@@ -193,22 +210,22 @@ class ApisixClient(ApiGatewayClient):
             "desc": new_description,
             "labels": new_labels,
         }
-        response = self._patch_request(url, data)
-        return response.status_code == 200
+        response = await self._patch_request(url, data)
+        return response.status == 200
 
-    def delete_consumer_group(self, consumer_group_name: str) -> bool:
+    async def delete_consumer_group(self, consumer_group_name: str) -> bool:
         """
         Deletes an existing consumer group.
 
         :param consumer_group_name: The name of the consumer group.
         :return: `True` if the consumer group was successfully deleted, otherwise `False`.
-        :raises ApisixRequestError: If there is an error while deleting the consumer group (e.g., HTTP error, invalid response).
+        :raises ApiGatewayRequestError: If there is an error while deleting the consumer group (e.g., HTTP error, invalid response).
         """
         url = f"/apisix/admin/consumer_groups/{consumer_group_name}"
-        response = self._delete_request(url)
-        return response.status_code == 200
+        response = await self._delete_request(url)
+        return response.status == 200
 
-    def set_rate_limit_to_consumer_group(
+    async def set_rate_limit_to_consumer_group(
         self, consumer_group_name: str, requests_number: int, time_window: int
     ) -> bool:
         """
@@ -218,7 +235,7 @@ class ApisixClient(ApiGatewayClient):
         :param requests_number: The maximum number of requests allowed within the time window.
         :param time_window: The time window (in seconds) within which the `requests_number` is counted.
         :return: `True` if the rate limit was successfully applied to the consumer group, otherwise `False`.
-        :raises ApisixRequestError: If there is an error while setting the rate limit (e.g., HTTP error, invalid response).
+        :raises ApiGatewayRequestError: If there is an error while setting the rate limit (e.g., HTTP error, invalid response).
         """
         url = f"/apisix/admin/consumer_groups/{consumer_group_name}"
 
@@ -234,5 +251,104 @@ class ApisixClient(ApiGatewayClient):
                 }
             }
         }
-        response = self._patch_request(url, data)
-        return response.status_code == 200
+        response = await self._patch_request(url, data)
+        return response.status == 200
+
+    async def get_consumers(self) -> list[dict[str, Any]]:
+        """
+        Retrieves a list of all consumers.
+
+        :return: A list of dictionaries, where each dictionary contains information about a consumer.
+        Each dictionary represents a consumer and may include details like username, labels, etc.
+        :raises ApiGatewayRequestError: If there is an error while fetching the list of consumers (e.g., HTTP error, invalid response).
+        """
+        url = "/apisix/admin/consumers/"
+        response = await self._get_request(url)
+        data = await response.json()
+        return data.get("list", [])
+
+    async def get_consumer(self, consumer_name: str) -> dict[str, Any]:
+        """
+        Retrieves the details of a specific consumer by name.
+
+        :param consumer_name: The name of the consumer to retrieve.
+        :return: A dictionary containing the details of the consumer (e.g., username, labels, etc.).
+        :raises ApiGatewayRequestError: If there is an error while fetching the consumer (e.g., HTTP error, invalid response).
+        """
+        url = f"/apisix/admin/consumers/{consumer_name}"
+        response = await self._get_request(url)
+        return await response.json()
+
+    async def upsert_consumer(
+        self,
+        consumer_name: str,
+        description: str | None = None,
+        labels: dict[str, str] | None = None,
+        consumer_group_name: str | None = None,
+    ) -> bool:
+        """
+        Creates or updates a consumer. If the consumer already exists, its information will be updated;
+        otherwise, a new consumer will be created.
+
+        :param consumer_name: The name of the consumer.
+        :param description: An optional description for the consumer.
+        :param labels: Optional dictionary of labels to associate with the consumer.
+        :param consumer_group_name: The name of the consumer group to associate the consumer with (optional).
+        :return: `True` if the consumer was successfully created or updated, otherwise `False`.
+        :raises ApiGatewayRequestError: If there is an error while creating or updating the consumer (e.g., HTTP error, invalid response).
+        """
+        url = "/apisix/admin/consumers/"
+
+        data = {
+            "username": consumer_name,
+            "plugins": {
+                "jwt-auth": {
+                    "key": consumer_name,
+                    "algorithm": "RS256",
+                    "public_key": settings.JWT_PUBLIC_KEY,
+                }
+            },
+        }
+
+        if labels is not None:
+            data["labels"] = labels
+
+        if description is not None:
+            data["desc"] = description
+
+        if consumer_group_name is not None:
+            data["group_id"] = consumer_group_name
+
+        response = await self._put_request(url, data)
+        return response.status == 201
+
+    async def delete_consumer(self, consumer_name: str) -> bool:
+        """
+        Deletes a specific consumer by name.
+
+        :param consumer_name: The name of the consumer to delete.
+        :return: `True` if the consumer was successfully deleted, otherwise `False`.
+        :raises ApiGatewayRequestError: If there is an error while deleting the consumer (e.g., HTTP error, invalid response).
+        """
+        url = f"/apisix/admin/consumers/{consumer_name}"
+        response = await self._delete_request(url)
+        return response.status == 200
+
+    async def update_consumers_jwt_config(self) -> None:
+        """
+        Updates the JWT configuration for all consumers. For each consumer, this method will fetch its details
+        and update its JWT authentication configuration with the current PUBLIC KEY configuration for JWT token validation (if changed).
+
+        :return: None
+        :raises ApiGatewayRequestError: If there is an error while fetching or updating any consumer (e.g., HTTP error, invalid response).
+        """
+        consumers = await self.get_consumers()
+
+        for consumer in consumers:
+            consumer_info = consumer.get("value", {})
+            await self.upsert_consumer(
+                consumer_info.get("consumer_name"),
+                consumer_info.get("description", None),
+                consumer_info.get("labels", None),
+                consumer_info.get("group_id"),
+            )
