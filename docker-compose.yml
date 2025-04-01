@@ -1,5 +1,6 @@
 volumes:
   nginx-shared:
+  etcd_data:
 
 services:
   nginx:
@@ -43,3 +44,25 @@ services:
       - "6379:6379"
     command:
       - --appendonly yes
+
+  etcd:
+    image: bitnami/etcd:latest
+    environment:
+      - ETCD_ENABLE_V2=true
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+    volumes:
+      - etcd_data:/bitnami/etcd
+    ports:
+      - "2379:2379"
+
+  apisix:
+    image: apache/apisix:latest
+    depends_on:
+      - etcd
+    volumes:
+      - ./docker/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+    ports:
+      - "9180:9180/tcp"
+      - "9080:9080/tcp"

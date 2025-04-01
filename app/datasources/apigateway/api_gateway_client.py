@@ -28,7 +28,10 @@ class ApiGatewayClient(ABC):
 
     @abstractmethod
     async def add_consumer_group(
-        self, name: str, description: str | None, labels: dict[str, str] | None = None
+        self,
+        name: str,
+        description: str | None = None,
+        labels: dict[str, str] | None = None,
     ) -> bool:
         """
         Adds a new consumer group with specified description and labels.

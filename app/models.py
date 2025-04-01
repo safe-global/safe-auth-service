@@ -55,7 +55,7 @@ class ConsumerGroup(BaseModel):
     name: str
     description: str | None
     labels: dict[str, str] | None
-    plugins: dict[str, Any] | None
+    plugins: dict[str, Any]
 
 
 class Consumer(BaseModel):
