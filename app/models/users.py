@@ -15,10 +15,8 @@ class PreRegistrationResponse(BaseModel):
 
 class RegistrationUser(PreRegistrationUser):
     token: str
-    username: str
     password: str
 
 
 class RegistrationUserResponse(PreRegistrationUser):
-    username: str
     uuid: str

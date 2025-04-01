@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+
+from starlette import status
 
 from ..models.users import (
     PreRegistrationResponse,
@@ -6,7 +8,12 @@ from ..models.users import (
     RegistrationUser,
     RegistrationUserResponse,
 )
-from ..services.registration_service import pre_register_user, register_user
+from ..services.registration_service import (
+    TemporaryTokenExists,
+    TemporaryTokenNotValid,
+    pre_register_user,
+    register_user,
+)
 
 router = APIRouter(
     prefix="/users",
@@ -19,21 +26,28 @@ router = APIRouter(
     response_model=PreRegistrationResponse,
 )
 async def pre_register(user_request: PreRegistrationUser) -> PreRegistrationResponse:
-    token = pre_register_user(str(user_request.email))
-    return PreRegistrationResponse(token=token)
+    try:
+        token = pre_register_user(str(user_request.email))
+        return PreRegistrationResponse(token=token)
+    except TemporaryTokenExists as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        )
 
 
 @router.post(
     "/registrations",
-    response_model=PreRegistrationResponse,
+    response_model=RegistrationUserResponse,
 )
 async def register(user_request: RegistrationUser) -> RegistrationUserResponse:
-    user_uuid = register_user(
-        str(user_request.email),
-        user_request.username,
-        user_request.password,
-        user_request.token,
-    )
-    return RegistrationUserResponse(
-        email=user_request.email, username=user_request.username, uuid=user_uuid
-    )
+    try:
+        user_uuid = await register_user(
+            str(user_request.email),
+            user_request.password,
+            user_request.token,
+        )
+        return RegistrationUserResponse(email=user_request.email, uuid=user_uuid)
+    except TemporaryTokenNotValid as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        )
