@@ -1,11 +1,44 @@
+import datetime
+import logging
+
 from fastapi import APIRouter, FastAPI
 
 from starlette.requests import Request
 from starlette.responses import Response
 
 from . import VERSION
-from .datasources.db.connector import db_session, set_database_session_context
+from .datasources.db.connector import (
+    _get_database_session_context,
+    db_session,
+    set_database_session_context,
+)
+from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
 from .routers import about, auth, default
+
+logger = logging.getLogger()
+
+
+def log_record_factory_for_request(*args, **kwargs) -> logging.LogRecord:
+    """
+    Inject session database identifier in log record.
+
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    # Create a log record with additional context
+    record = logging.LogRecord(*args, **kwargs)
+    try:
+        record.db_session = _get_database_session_context()
+    except LookupError:
+        # This error means that there is not session
+        pass
+
+    return record
+
+
+logging.setLogRecordFactory(log_record_factory_for_request)
+
 
 app = FastAPI(
     title="Safe Auth Service",
@@ -30,13 +63,14 @@ async def http_request_middleware(request: Request, call_next):
     """
     Intercepts request and do some actions:
      - Set the database session context for the current request, so the same database session is used across the whole request.
+     - Log requests calls
 
     :param request:
     :param call_next:
     :return:
     """
+    start_time = datetime.datetime.now(datetime.timezone.utc)
     with set_database_session_context():
-
         response: Response | None = None
         try:
             response = await call_next(request)
@@ -44,5 +78,31 @@ async def http_request_middleware(request: Request, call_next):
             raise e
         finally:
             await db_session.remove()
+            # Log request
+            try:
+                end_time = datetime.datetime.now(datetime.timezone.utc)
+                total_time = (
+                    end_time - start_time
+                ).total_seconds() * 1000  # time in ms
+                http_request = HttpRequestLog(
+                    url=str(request.url),
+                    method=request.method,
+                    startTime=start_time,
+                )
+                status_code = response.status_code if response else 500
+                http_response = HttpResponseLog(
+                    status=status_code,
+                    endTime=end_time,
+                    totalTime=int(total_time),
+                )
+                logger.info(
+                    "Http request",
+                    extra={
+                        "http_response": http_response.model_dump(),
+                        "http_request": http_request.model_dump(),
+                    },
+                )
+            except ValueError as e:
+                logger.error(f"Validation log error {e}")
 
-            return response
+    return response

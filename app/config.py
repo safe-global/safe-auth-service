@@ -2,9 +2,12 @@
 Base settings file for FastApi application.
 """
 
+import logging.config
 import os
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.loggers.safe_logger import SafeJsonFormatter
 
 
 class Settings(BaseSettings):
@@ -15,6 +18,7 @@ class Settings(BaseSettings):
         case_sensitive=True,
     )
     TEST: bool = False
+    LOG_LEVEL: str = "INFO"
     REDIS_URL: str = "redis://"
     NONCE_TTL_SECONDS: int = 60 * 10
     DEFAULT_SIWE_MESSAGE_STATEMENT: str = (
@@ -32,3 +36,25 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+LOGGING_CONFIG = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"json": {"()": SafeJsonFormatter}},  # Custom formatter class
+    "handlers": {
+        "console": {
+            "level": settings.LOG_LEVEL,
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+        }
+    },
+    "loggers": {
+        "": {
+            "level": settings.LOG_LEVEL,
+            "handlers": ["console"],
+            "propagate": False,
+        }
+    },
+}
+
+logging.config.dictConfig(LOGGING_CONFIG)
