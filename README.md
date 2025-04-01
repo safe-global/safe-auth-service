@@ -20,7 +20,7 @@ docker compose build
 docker compose up
 ```
 
-Then go to http://localhost:8888 to see the service documentation.
+Then go to http://localhost:8000 to see the service documentation.
 
 ## Setup for development
 Use a virtualenv if possible:
@@ -53,9 +53,8 @@ To open an interactive Python shell within a Docker container and query the data
 ```
 Example usage:
 ```python
-contracts = await Contract.get_all()
-contracts[0].address
-b'J\xdb\xaa\xc7\xbc#\x9e%\x19\xcb\xfd#\x97\xe0\xf7Z\x1d\xe3U\xc8'
+users = await Users.get_all()
+print(users[0].email)
 ```
 Call `await restore_session()` to reopen a new session.
 
