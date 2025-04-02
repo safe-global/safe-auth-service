@@ -9,25 +9,27 @@ from app.main import app
 
 from ...datasources.db.connector import db_session, db_session_context
 from ...datasources.db.models import Users
-from ..datasources.db.async_db_connector import AsyncDbConnector
+from ...datasources.email.email_provider import EmailProvider
+from ..datasources.db.async_db_test_case import AsyncDbTestCase
 
 
-class TestUsers(AsyncDbConnector):
+class TestUsers(AsyncDbTestCase):
     client: TestClient
 
     @classmethod
     def setUpClass(cls):
         cls.client = TestClient(app)
+        get_redis().flushall()
 
-    def setUp(self):
+    def tearDown(self):
         get_redis().flushall()
 
     def test_pre_register(self):
         email = "testing@safe.global"
         payload = {"email": email}
 
-        with mock.patch(
-            "app.services.registration_service.send_temporary_token_email"
+        with mock.patch.object(
+            EmailProvider, "send_temporary_token_email"
         ) as send_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
@@ -62,8 +64,8 @@ class TestUsers(AsyncDbConnector):
         count = await db_session.execute(select(func.count(Users.id)))
         self.assertEqual(count.one()[0], 0)
 
-        with mock.patch(
-            "app.services.registration_service.send_temporary_token_email"
+        with mock.patch.object(
+            EmailProvider, "send_temporary_token_email"
         ) as send_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)

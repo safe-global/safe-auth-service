@@ -8,11 +8,10 @@ from ..models.users import (
     RegistrationUser,
     RegistrationUserResponse,
 )
-from ..services.registration_service import (
+from ..services.user_service import (
     TemporaryTokenExists,
     TemporaryTokenNotValid,
-    pre_register_user,
-    register_user,
+    UserService,
 )
 
 router = APIRouter(
@@ -26,8 +25,9 @@ router = APIRouter(
     response_model=PreRegistrationResponse,
 )
 async def pre_register(user_request: PreRegistrationUser) -> PreRegistrationResponse:
+    user_service = UserService()
     try:
-        token = pre_register_user(str(user_request.email))
+        token = user_service.pre_register_user(str(user_request.email))
         return PreRegistrationResponse(token=token)
     except TemporaryTokenExists as e:
         raise HTTPException(
@@ -40,8 +40,9 @@ async def pre_register(user_request: PreRegistrationUser) -> PreRegistrationResp
     response_model=RegistrationUserResponse,
 )
 async def register(user_request: RegistrationUser) -> RegistrationUserResponse:
+    user_service = UserService()
     try:
-        user_uuid = await register_user(
+        user_uuid = await user_service.register_user(
             str(user_request.email),
             user_request.password,
             user_request.token,
