@@ -7,8 +7,12 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from . import VERSION
+from .datasources.db.connector import (
+    _get_database_session_context,
+    db_session,
+    set_database_session_context,
+)
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
-from .datasources.db.connector import db_session, set_database_session_context, _get_database_session_context
 from .routers import about, default, users
 
 logger = logging.getLogger()

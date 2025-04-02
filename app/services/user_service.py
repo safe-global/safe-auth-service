@@ -57,7 +57,7 @@ class UserService:
             `True` if the token is valid
         """
         cached_token = cast(bytes, get_redis().get(key_prefix + email))
-        return cached_token and cached_token.decode() == token
+        return bool(cached_token and cached_token.decode() == token)
 
     def temporary_token_exists(self, key_prefix: str, email: str) -> bool:
         """
@@ -67,7 +67,7 @@ class UserService:
         Returns:
             ``True`` if a temporary token exists for the provided email
         """
-        return get_redis().exists(key_prefix + email)
+        return cast(bool, get_redis().exists(key_prefix + email))
 
     def pre_register_user(self, email: str) -> str:
         """

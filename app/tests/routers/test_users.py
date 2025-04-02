@@ -2,12 +2,10 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 
-from sqlalchemy import func, select
-
 from app.datasources.cache.redis import get_redis
 from app.main import app
 
-from ...datasources.db.connector import db_session, db_session_context
+from ...datasources.db.connector import db_session_context
 from ...datasources.db.models import Users
 from ...datasources.email.email_provider import EmailProvider
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
@@ -61,8 +59,8 @@ class TestUsers(AsyncDbTestCase):
             response.json(), {"detail": f"Temporary token not valid for {email}"}
         )
 
-        count = await db_session.execute(select(func.count(Users.id)))
-        self.assertEqual(count.one()[0], 0)
+        count = await Users.count()
+        self.assertEqual(count, 0)
 
         with mock.patch.object(
             EmailProvider, "send_temporary_token_email"
@@ -74,5 +72,5 @@ class TestUsers(AsyncDbTestCase):
             response = self.client.post("/api/v1/users/registrations", json=payload)
             self.assertEqual(response.status_code, 200)
 
-        count = await db_session.execute(select(func.count(Users.id)))
-        self.assertEqual(count.one()[0], 1)
+        count = await Users.count()
+        self.assertEqual(count, 1)
