@@ -1,8 +1,8 @@
 from unittest import IsolatedAsyncioTestCase, mock
 
-from app.datasources.apigateway.api_gateway_client import ApiGatewayClient
-from app.datasources.apigateway.apisix.apisix_client import ApisixClient
-from app.datasources.apigateway.exceptions import ApiGatewayRequestError
+from app.datasources.api_gateway.api_gateway_client import ApiGatewayClient
+from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
+from app.datasources.api_gateway.exceptions import ApiGatewayRequestError
 
 
 class TestApisixClient(IsolatedAsyncioTestCase):
@@ -10,7 +10,13 @@ class TestApisixClient(IsolatedAsyncioTestCase):
     apisix_client: ApiGatewayClient
 
     async def asyncSetUp(self):
-        self.apisix_client = ApisixClient("http://localhost:9180", "apisix")
+        self.apisix_client = get_apisix_client("http://localhost:9180", "apisix")
+
+    def setUp(self):
+        get_apisix_client.cache_clear()
+
+    def tearDown(self):
+        get_apisix_client.cache_clear()
 
     async def asyncTearDown(self):
         consumers = await self.apisix_client.get_consumers()
@@ -40,6 +46,13 @@ class TestApisixClient(IsolatedAsyncioTestCase):
         self.assertEqual(consumer_group.plugins, {})
 
     async def test_update_consumer_group(self):
+        with self.assertRaises(ApiGatewayRequestError):
+            await self.apisix_client.update_consumer_group(
+                "consumer_group_two",
+                new_description="new description",
+                new_labels={"env": "new"},
+            )
+
         await self.apisix_client.add_consumer_group("consumer_group_two")
 
         consumer_group = await self.apisix_client.get_consumer_group(
@@ -65,6 +78,11 @@ class TestApisixClient(IsolatedAsyncioTestCase):
         self.assertEqual(consumer_group.plugins, {})
 
     async def test_set_rate_limit_consumer_group(self):
+        with self.assertRaises(ApiGatewayRequestError):
+            await self.apisix_client.set_rate_limit_to_consumer_group(
+                "consumer_group_with_rate_limit", requests_number=5, time_window=1
+            )
+
         await self.apisix_client.add_consumer_group("consumer_group_with_rate_limit")
 
         consumer_group = await self.apisix_client.get_consumer_group(

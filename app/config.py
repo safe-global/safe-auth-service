@@ -31,5 +31,7 @@ class Settings(BaseSettings):
     DATABASE_POOL_CLASS: str = "AsyncAdaptedQueuePool"
     DATABASE_POOL_SIZE: int = 10
 
+    APISIX_CONNECTIONS_POOL_SIZE: int = 100
+
 
 settings = Settings()

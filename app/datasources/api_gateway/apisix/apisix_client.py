@@ -1,5 +1,6 @@
 import logging
-from typing import Any
+from functools import cache
+from typing import Any, Callable
 
 import aiohttp
 from aiohttp import ClientTimeout
@@ -11,6 +12,15 @@ from ..api_gateway_client import ApiGatewayClient
 from ..exceptions import ApiGatewayRequestError
 
 logger = logging.getLogger(__name__)
+
+
+@cache
+def get_apisix_client(
+    base_url: str, api_key: str | None = None, request_timeout: int = 10
+) -> "ApisixClient":
+    return ApisixClient(
+        base_url=base_url, api_key=api_key, request_timeout=request_timeout
+    )
 
 
 class ApisixClient(ApiGatewayClient):
@@ -26,9 +36,48 @@ class ApisixClient(ApiGatewayClient):
         self.base_url = base_url
         self.api_key = api_key
         self.async_session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(limit_per_host=100)
+            connector=aiohttp.TCPConnector(limit=settings.APISIX_CONNECTIONS_POOL_SIZE)
         )
         self.request_timeout = request_timeout
+
+    async def _do_request(
+        self, url: str, request_func: Callable, payload: dict[str, Any] | None = None
+    ) -> aiohttp.ClientResponse:
+        """
+        A generic method to perform HTTP requests (GET, PUT, PATCH, DELETE).
+        :param request_func: The function to execute (e.g., async_session.get, async_session.put, async_session.patch, async_session.delete).
+        :param url: The URL to send the request to.
+        :param payload: The data to be sent in the request body.
+        :return: The response object from the HTTP request.
+        :raises ApiGatewayRequestError: If there is an error with the request.
+        """
+        full_url = build_full_url(self.base_url, url)
+
+        headers = {}
+        if self.api_key:
+            headers["X-API-KEY"] = self.api_key
+        if payload:
+            headers["Content-Type"] = "application/json"
+
+        try:
+            response = await request_func(
+                full_url,
+                json=payload if payload else None,
+                headers=headers,
+                timeout=ClientTimeout(total=self.request_timeout),
+            )
+
+        except (ValueError, IOError) as e:
+            raise ApiGatewayRequestError(
+                f"Error performing request to {url} with payload {payload}"
+            ) from e
+
+        if not response.ok:
+            raise ApiGatewayRequestError(
+                f"Error performing request to {url} with payload {payload}: {response.status} {response.reason}"
+            )
+
+        return response
 
     async def _get_request(self, url: str) -> aiohttp.ClientResponse:
         """
@@ -37,27 +86,7 @@ class ApisixClient(ApiGatewayClient):
         :return: The response object from the GET request.
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
-        full_url = build_full_url(self.base_url, url)
-
-        headers = {}
-        if self.api_key:
-            headers["X-API-KEY"] = self.api_key
-
-        try:
-            response = await self.async_session.get(
-                full_url,
-                headers=headers,
-                timeout=ClientTimeout(total=self.request_timeout),
-            )
-        except (ValueError, IOError) as e:
-            raise ApiGatewayRequestError(f"Error fetching {url} from Apisix") from e
-
-        if not response.ok:
-            raise ApiGatewayRequestError(
-                f"Error fetching {url} from Apisix: {response.status} {response.content!r}"
-            )
-
-        return response
+        return await self._do_request(url, self.async_session.get)
 
     async def _put_request(
         self, url: str, payload: dict[str, Any]
@@ -69,30 +98,7 @@ class ApisixClient(ApiGatewayClient):
         :return: The response object from the PUT request.
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
-        full_url = build_full_url(self.base_url, url)
-
-        headers = {"Content-type": "application/json"}
-        if self.api_key:
-            headers["X-API-KEY"] = self.api_key
-
-        try:
-            response = await self.async_session.put(
-                full_url,
-                json=payload,
-                headers=headers,
-                timeout=ClientTimeout(total=self.request_timeout),
-            )
-        except (ValueError, IOError) as e:
-            raise ApiGatewayRequestError(
-                f"Error creating {url} with payload {payload} in Apisix"
-            ) from e
-
-        if not response.ok:
-            raise ApiGatewayRequestError(
-                f"Error creating {url} with payload {payload} in Apisix: {response.status} {response.content!r}"
-            )
-
-        return response
+        return await self._do_request(url, self.async_session.put, payload)
 
     async def _patch_request(
         self, url: str, payload: dict[str, Any]
@@ -104,30 +110,7 @@ class ApisixClient(ApiGatewayClient):
         :return: The response object from the PATCH request.
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
-        full_url = build_full_url(self.base_url, url)
-
-        headers = {"Content-type": "application/json"}
-        if self.api_key:
-            headers["X-API-KEY"] = self.api_key
-
-        try:
-            response = await self.async_session.patch(
-                full_url,
-                json=payload,
-                headers=headers,
-                timeout=ClientTimeout(total=self.request_timeout),
-            )
-        except (ValueError, IOError) as e:
-            raise ApiGatewayRequestError(
-                f"Error updating {url} with payload {payload} in Apisix"
-            ) from e
-
-        if not response.ok:
-            raise ApiGatewayRequestError(
-                f"Error updating {url} with payload {payload} in Apisix: {response.status} {response.content!r}"
-            )
-
-        return response
+        return await self._do_request(url, self.async_session.patch, payload)
 
     async def _delete_request(self, url: str) -> aiohttp.ClientResponse:
         """
@@ -136,28 +119,7 @@ class ApisixClient(ApiGatewayClient):
         :return: The response object from the DELETE request.
         :raises ApiGatewayRequestError: If there is an error with the request.
         """
-        full_url = build_full_url(self.base_url, url)
-
-        headers = {"Content-type": "application/json"}
-        if self.api_key:
-            headers["X-API-KEY"] = self.api_key
-
-        try:
-            response = await self.async_session.delete(
-                full_url,
-                headers=headers,
-                timeout=ClientTimeout(total=self.request_timeout),
-            )
-        except (ValueError, IOError) as e:
-            logger.error("Error deleting %s", url)
-            raise ApiGatewayRequestError(f"Error deleting {url} in Apisix") from e
-
-        if not response.ok:
-            raise ApiGatewayRequestError(
-                f"Error updating {url} in Apisix: {response.status} {response.content!r}"
-            )
-
-        return response
+        return await self._do_request(url, self.async_session.delete)
 
     def _parse_consumer_group_reponse(
         self, consumer_group_data: dict[str, Any]
@@ -168,7 +130,7 @@ class ApisixClient(ApiGatewayClient):
         :param consumer_group_data: A dictionary containing the consumer group data from API response.
         :return: A ConsumerGroup instance with the parsed data.
         """
-        consumer_group_data_value = consumer_group_data.get("value", {})
+        consumer_group_data_value = consumer_group_data["value"]
         return ConsumerGroup(
             name=consumer_group_data_value["id"],
             description=consumer_group_data_value.get("desc"),
@@ -202,14 +164,14 @@ class ApisixClient(ApiGatewayClient):
 
         data: dict[str, Any] = {"plugins": {}}
 
-        if labels is not None:
+        if labels:
             data["labels"] = labels
 
-        if description is not None:
+        if description:
             data["desc"] = description
 
         response = await self._put_request(url, data)
-        return response.status == 201
+        return response.ok
 
     async def update_consumer_group(
         self, name: str, new_description: str, new_labels: dict[str, str]
@@ -221,12 +183,12 @@ class ApisixClient(ApiGatewayClient):
             "labels": new_labels,
         }
         response = await self._patch_request(url, data)
-        return response.status == 200
+        return response.ok
 
     async def delete_consumer_group(self, consumer_group_name: str) -> bool:
         url = f"/apisix/admin/consumer_groups/{consumer_group_name}"
         response = await self._delete_request(url)
-        return response.status == 200
+        return response.ok
 
     async def set_rate_limit_to_consumer_group(
         self, consumer_group_name: str, requests_number: int, time_window: int
@@ -246,7 +208,7 @@ class ApisixClient(ApiGatewayClient):
             }
         }
         response = await self._patch_request(url, data)
-        return response.status == 200
+        return response.ok
 
     def _parse_consumer_reponse(self, consumer_data: dict[str, Any]) -> Consumer:
         """
@@ -255,7 +217,7 @@ class ApisixClient(ApiGatewayClient):
         :param consumer_data: A dictionary containing the consumer data from API response.
         :return: A Consumer instance with the parsed data.
         """
-        consumer_data_value = consumer_data.get("value", {})
+        consumer_data_value = consumer_data["value"]
         return Consumer(
             name=consumer_data_value["username"],
             description=consumer_data_value.get("desc"),
@@ -300,22 +262,22 @@ class ApisixClient(ApiGatewayClient):
             },
         }
 
-        if labels is not None:
+        if labels:
             data["labels"] = labels
 
-        if description is not None:
+        if description:
             data["desc"] = description
 
-        if consumer_group_name is not None:
+        if consumer_group_name:
             data["group_id"] = consumer_group_name
 
         response = await self._put_request(url, data)
-        return response.status == 201
+        return response.ok
 
     async def delete_consumer(self, consumer_name: str) -> bool:
         url = f"/apisix/admin/consumers/{consumer_name}"
         response = await self._delete_request(url)
-        return response.status == 200
+        return response.ok
 
     async def update_consumers_jwt_config(self) -> None:
         consumers = await self.get_consumers()
