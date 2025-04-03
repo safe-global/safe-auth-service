@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     REDIS_URL: str = "redis://"
     NONCE_TTL_SECONDS: int = 60 * 10
-    PRE_REGISTRATION_TOKEN_TTL_SECONDS: int = 60 * 10 # 10 minutes
+    PRE_REGISTRATION_TOKEN_TTL_SECONDS: int = 60 * 10  # 10 minutes
     DEFAULT_SIWE_MESSAGE_STATEMENT: str = (
         "Welcome to Safe! I accept the Terms of Use: https://safe.global/terms."
     )
