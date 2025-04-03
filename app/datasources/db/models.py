@@ -1,6 +1,7 @@
 import uuid
 
-from sqlmodel import Field, SQLModel, select
+from sqlalchemy import func
+from sqlmodel import Field, SQLModel, col, select
 
 from .connector import db_session
 
@@ -28,3 +29,7 @@ class Users(SqlQueryBase, SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     email: str = Field(nullable=False, index=True, unique=True)
     hashed_password: str = Field(nullable=False)
+
+    @classmethod
+    async def count(cls) -> int:
+        return (await db_session.execute(select(func.count(col(cls.id))))).one()[0]

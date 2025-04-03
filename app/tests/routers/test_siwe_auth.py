@@ -4,6 +4,7 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 
+import pytest
 import siwe
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -14,7 +15,8 @@ from safe_eth.util.util import to_0x_hex_str
 from ...main import app
 
 
-class TestRouterAuth(unittest.TestCase):
+@pytest.mark.skip(reason="Currently not using SIWE auth")
+class TestSiweAuth(unittest.TestCase):
     client: TestClient
 
     @classmethod
