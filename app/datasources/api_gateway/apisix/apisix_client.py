@@ -18,20 +18,32 @@ logger = logging.getLogger(__name__)
 def get_apisix_client(
     base_url: str, api_key: str | None = None, request_timeout: int = 10
 ) -> "ApisixClient":
+    """
+    Creates and returns an ApisixClient instance.
+
+    Args:
+        base_url: The base URL for the Apisix API.
+        api_key: The API key for authenticating requests.
+        request_timeout: The timeout (in seconds) for HTTP requests.
+
+    Returns:
+        An instance of ApisixClient.
+    """
     return ApisixClient(
         base_url=base_url, api_key=api_key, request_timeout=request_timeout
     )
 
 
 class ApisixClient(ApiGatewayClient):
-
     def __init__(
         self, base_url: str, api_key: str | None = None, request_timeout: int = 10
     ):
         """
-        :param base_url: The base URL for the Apisix API.
-        :param api_key: The API key for authenticating requests.
-        :param request_timeout: The timeout (in seconds) for HTTP requests.
+
+        Args:
+            base_url: The base URL for the Apisix API.
+            api_key: The API key for authenticating requests.
+            request_timeout: The timeout (in seconds) for HTTP requests.
         """
         self.base_url = base_url
         self.api_key = api_key
@@ -45,11 +57,17 @@ class ApisixClient(ApiGatewayClient):
     ) -> aiohttp.ClientResponse:
         """
         A generic method to perform HTTP requests (GET, PUT, PATCH, DELETE).
-        :param request_func: The function to execute (e.g., async_session.get, async_session.put, async_session.patch, async_session.delete).
-        :param url: The URL to send the request to.
-        :param payload: The data to be sent in the request body.
-        :return: The response object from the HTTP request.
-        :raises ApiGatewayRequestError: If there is an error with the request.
+
+        Args:
+            url: The URL to send the request to.
+            request_func: The function to execute (e.g., async_session.get, async_session.put, async_session.patch, async_session.delete).
+            payload: The data to be sent in the request body.
+
+        Returns:
+            The response object from the HTTP request.
+
+        Raises:
+            ApiGatewayRequestError: If there is an error with the request.
         """
         full_url = build_full_url(self.base_url, url)
 
@@ -81,10 +99,16 @@ class ApisixClient(ApiGatewayClient):
 
     async def _get_request(self, url: str) -> aiohttp.ClientResponse:
         """
+        Sends a GET request.
 
-        :param url: The URL to send the GET request to.
-        :return: The response object from the GET request.
-        :raises ApiGatewayRequestError: If there is an error with the request.
+        Args:
+            url: The URL to send the GET request to.
+
+        Returns:
+            The response object from the GET request.
+
+        Raises:
+            ApiGatewayRequestError: If there is an error with the request.
         """
         return await self._do_request(url, self.async_session.get)
 
@@ -92,11 +116,17 @@ class ApisixClient(ApiGatewayClient):
         self, url: str, payload: dict[str, Any]
     ) -> aiohttp.ClientResponse:
         """
+        Sends a PUT request.
 
-        :param url: The URL to send the PUT request to.
-        :param payload: The data to be sent in the PUT request.
-        :return: The response object from the PUT request.
-        :raises ApiGatewayRequestError: If there is an error with the request.
+        Args:
+            url: The URL to send the PUT request to.
+            payload: The data to be sent in the PUT request.
+
+        Returns:
+            The response object from the PUT request.
+
+        Raises:
+            ApiGatewayRequestError: If there is an error with the request.
         """
         return await self._do_request(url, self.async_session.put, payload)
 
@@ -104,20 +134,32 @@ class ApisixClient(ApiGatewayClient):
         self, url: str, payload: dict[str, Any]
     ) -> aiohttp.ClientResponse:
         """
+        Sends a PATCH request.
 
-        :param url: The URL to send the PATCH request to.
-        :param payload: The data to be sent in the PATCH request.
-        :return: The response object from the PATCH request.
-        :raises ApiGatewayRequestError: If there is an error with the request.
+        Args:
+            url: The URL to send the PATCH request to.
+            payload: The data to be sent in the PATCH request.
+
+        Returns:
+            The response object from the PATCH request.
+
+        Raises:
+            ApiGatewayRequestError: If there is an error with the request.
         """
         return await self._do_request(url, self.async_session.patch, payload)
 
     async def _delete_request(self, url: str) -> aiohttp.ClientResponse:
         """
+        Sends a DELETE request.
 
-        :param url: The URL to send the DELETE request to.
-        :return: The response object from the DELETE request.
-        :raises ApiGatewayRequestError: If there is an error with the request.
+        Args:
+            url: The URL to send the DELETE request to.
+
+        Returns:
+            The response object from the DELETE request.
+
+        Raises:
+            ApiGatewayRequestError: If there is an error with the request.
         """
         return await self._do_request(url, self.async_session.delete)
 
@@ -125,10 +167,13 @@ class ApisixClient(ApiGatewayClient):
         self, consumer_group_data: dict[str, Any]
     ) -> ConsumerGroup:
         """
-        Parses consumer group data from API response and returns a ConsumerGroup instance.
+        Parses consumer group data from API response.
 
-        :param consumer_group_data: A dictionary containing the consumer group data from API response.
-        :return: A ConsumerGroup instance with the parsed data.
+        Args:
+            consumer_group_data: A dictionary containing the consumer group data from API response.
+
+        Returns:
+            A ConsumerGroup instance with the parsed data.
         """
         consumer_group_data_value = consumer_group_data["value"]
         return ConsumerGroup(
@@ -212,10 +257,13 @@ class ApisixClient(ApiGatewayClient):
 
     def _parse_consumer_reponse(self, consumer_data: dict[str, Any]) -> Consumer:
         """
-        Parses consumer data from API response and returns a Consumer instance.
+        Parses consumer data from API response.
 
-        :param consumer_data: A dictionary containing the consumer data from API response.
-        :return: A Consumer instance with the parsed data.
+        Args:
+            consumer_data: A dictionary containing the consumer data from API response.
+
+        Returns:
+            A Consumer instance with the parsed data.
         """
         consumer_data_value = consumer_data["value"]
         return Consumer(
