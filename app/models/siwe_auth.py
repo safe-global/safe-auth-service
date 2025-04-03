@@ -41,7 +41,3 @@ class SiweMessageVerificationRequest(BaseModel):
 
 class JwtToken(BaseModel):
     token: str
-
-
-class APIErrorResponse(BaseModel):
-    detail: str
