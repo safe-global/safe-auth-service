@@ -7,7 +7,7 @@ from aiohttp import ClientTimeout
 from safe_eth.util.http import build_full_url
 
 from ....config import settings
-from ....models import Consumer, ConsumerGroup
+from ....models.api_gateway import Consumer, ConsumerGroup
 from ..api_gateway_client import ApiGatewayClient
 from ..exceptions import ApiGatewayRequestError
 

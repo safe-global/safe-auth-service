@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from ...models import Consumer, ConsumerGroup
+from ...models.api_gateway import Consumer, ConsumerGroup
 
 
 class ApiGatewayClient(ABC):

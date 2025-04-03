@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import AnyUrl, BaseModel, Field, field_validator
 
@@ -45,18 +45,3 @@ class JwtToken(BaseModel):
 
 class APIErrorResponse(BaseModel):
     detail: str
-
-
-class ConsumerGroup(BaseModel):
-    name: str
-    description: str | None
-    labels: dict[str, str] | None
-    plugins: dict[str, Any]
-
-
-class Consumer(BaseModel):
-    name: str
-    description: str | None
-    labels: dict[str, str] | None
-    plugins: dict[str, Any] | None
-    consumer_group_name: str | None
