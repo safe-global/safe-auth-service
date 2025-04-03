@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from freezegun import freeze_time
 
 from app.config import settings
-from app.models import SiweMessageInfo
+from app.models.siwe_auth import SiweMessageInfo
 from app.services.jwt_service import create_jwt_token
 
 
