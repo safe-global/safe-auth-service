@@ -25,7 +25,7 @@ class SqlQueryBase:
         return await self._save()
 
 
-class Users(SqlQueryBase, SQLModel, table=True):
+class User(SqlQueryBase, SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     email: str = Field(nullable=False, index=True, unique=True)
     hashed_password: str = Field(nullable=False)

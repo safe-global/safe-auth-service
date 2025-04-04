@@ -5,7 +5,7 @@ import bcrypt
 
 from ..config import settings
 from ..datasources.cache.redis import get_redis
-from ..datasources.db.models import Users
+from ..datasources.db.models import User
 from ..datasources.email.email_provider import EmailProvider
 
 
@@ -110,6 +110,6 @@ class UserService:
             raise TemporaryTokenNotValid(f"Temporary token not valid for {email}")
         hashed_password = self.hash_password(password)
         user_uuid = uuid.uuid4().hex
-        user = Users(id=user_uuid, email=email, hashed_password=hashed_password)
+        user = User(id=user_uuid, email=email, hashed_password=hashed_password)
         await user.create()
         return user_uuid
