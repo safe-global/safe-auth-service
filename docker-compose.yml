@@ -38,6 +38,7 @@ services:
     volumes:
       - nginx-shared:/nginx
     command: docker/web/run_web.sh
+
   redis:
     image: redis:alpine
     ports:

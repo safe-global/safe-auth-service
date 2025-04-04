@@ -6,7 +6,7 @@ from app.datasources.cache.redis import get_redis
 from app.main import app
 
 from ...datasources.db.connector import db_session_context
-from ...datasources.db.models import Users
+from ...datasources.db.models import User
 from ...datasources.email.email_provider import EmailProvider
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
 
@@ -59,7 +59,7 @@ class TestUsers(AsyncDbTestCase):
             response.json(), {"detail": f"Temporary token not valid for {email}"}
         )
 
-        count = await Users.count()
+        count = await User.count()
         self.assertEqual(count, 0)
 
         with mock.patch.object(
@@ -72,5 +72,5 @@ class TestUsers(AsyncDbTestCase):
             response = self.client.post("/api/v1/users/registrations", json=payload)
             self.assertEqual(response.status_code, 200)
 
-        count = await Users.count()
+        count = await User.count()
         self.assertEqual(count, 1)
