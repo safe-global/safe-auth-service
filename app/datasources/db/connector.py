@@ -29,7 +29,9 @@ _db_session_context: ContextVar[str] = ContextVar("db_session_context")
 def get_engine() -> AsyncEngine:
     """
     Establish connection to database
-    :return:
+
+    Returns:
+        Database engine instance
     """
     if settings.TEST:
         return create_async_engine(
@@ -54,9 +56,17 @@ def set_database_session_context(
     Set session ContextVar, at the end it will be removed.
     This context is designed to be used with `async_scoped_session` to define a context scope.
 
-    :param session_id:
-    :return:
+
+    Args:
+        session_id: Optional session id if is not provided will be generated automatically
+
+    Yields:
+        Generator function that yields control back to the caller.
+
+    Finally:
+        The session context is removed after the function has finished executing.
     """
+
     _session_id: str = session_id or str(uuid.uuid4())
     logger.debug("Storing db_session context")
     token = _db_session_context.set(_session_id)
@@ -72,7 +82,8 @@ def _get_database_session_context() -> str:
     Get the database session id from the ContextVar.
     Used as a scope function on `async_scoped_session`.
 
-    :return: session_id for the current context
+    Returns:
+        session_id for the current context
     """
     return _db_session_context.get()
 
@@ -82,6 +93,15 @@ def db_session_context(func):
     Wrap the decorated function in the `set_database_session_context` context.
     Decorated function will share the same database session.
     Remove the session at the end of the context.
+
+    Args:
+        func (Callable): The function to be wrapped and executed within the database
+                          session context.
+
+    Returns:
+        Callable: The wrapped function that ensures the database session context
+                  is set before the function executes and removed afterward.
+
     """
 
     @wraps(func)
