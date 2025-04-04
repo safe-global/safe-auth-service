@@ -1,4 +1,5 @@
 import uuid
+from typing import Self
 
 from sqlalchemy import func
 from sqlmodel import Field, SQLModel, col, select
@@ -33,3 +34,10 @@ class User(SqlQueryBase, SQLModel, table=True):
     @classmethod
     async def count(cls) -> int:
         return (await db_session.execute(select(func.count(col(cls.id))))).one()[0]
+
+    @classmethod
+    async def get_by_email(cls, email: str) -> Self | None:
+        result = await db_session.execute(select(cls).where(cls.email == email))
+        if user := result.first():
+            return user[0]
+        return None
