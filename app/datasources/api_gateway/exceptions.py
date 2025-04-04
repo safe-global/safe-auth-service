@@ -1,0 +1,2 @@
+class ApiGatewayRequestError(Exception):
+    pass

@@ -31,9 +31,12 @@ class Settings(BaseSettings):
     JWT_ISSUER: str = "safe-auth-service"
     JWT_EXPIRATION_SECONDS: int = 24 * 60 * 60
     JWT_COOKIE_NAME: str = "safe_access_token"
+    JWT_PUBLIC_KEY: str = ""  # RSA public key -----BEGIN ... To share with Apisix
     DATABASE_URL: str = "psql://postgres:"
     DATABASE_POOL_CLASS: str = "AsyncAdaptedQueuePool"
     DATABASE_POOL_SIZE: int = 10
+
+    APISIX_CONNECTIONS_POOL_SIZE: int = 100
 
 
 settings = Settings()
