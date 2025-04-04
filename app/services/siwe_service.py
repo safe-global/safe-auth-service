@@ -22,7 +22,8 @@ def generate_nonce() -> str:
     Generates a new nonce to be used in the Sign-in with Ethereum process (EIP-4361).
     The nonce is cached for future validation. The cache lifetime is configured by NONCE_TTL_SECONDS key.
 
-    :return: Alphanumeric random character string of at least 8 characters.
+    Returns:
+        Alphanumeric random character string of at least 8 characters.
     """
     nonce = siwe.generate_nonce()
     get_redis().set(CACHE_NONCE_PREFIX + nonce, nonce, ex=settings.NONCE_TTL_SECONDS)
@@ -33,8 +34,11 @@ def is_nonce_valid(nonce: str) -> bool:
     """
     Checks if the provided nonce is valid by verifying its existence in the cache.
 
-    :param nonce: The nonce string to validate.
-    :return: `True` if the nonce exists in the cache and is valid, `False` otherwise.
+    Args:
+        nonce: The nonce string to validate.
+
+    Returns:
+        `True` if the nonce exists in the cache and is valid, `False` otherwise.
     """
     return bool(get_redis().exists(CACHE_NONCE_PREFIX + nonce))
 
@@ -43,8 +47,11 @@ def clear_nonce(nonce: str) -> bool:
     """
     Removes the provided nonce from the cache, invalidating it.
 
-    :param nonce: The nonce string to be removed from the cache.
-    :return: `True` if the nonce was successfully deleted, `False` if the nonce could not be deleted.
+    Args:
+        nonce: The nonce string to be removed from the cache.
+
+    Returns:
+        `True` if the nonce was successfully deleted, `False` if the nonce could not be deleted.
     """
     return bool(get_redis().delete(CACHE_NONCE_PREFIX + nonce))
 
@@ -55,12 +62,15 @@ def create_siwe_message(
     """
     Creates a new Sign-in with Ethereum (EIP-4361) message.
 
-    :param domain: The domain that is requesting the signing. Its value MUST be an RFC 3986 authority.
-    :param address: The Ethereum address performing the signing.
-    :param chain_id: The Chain ID to which the session is bound.
-    :param uri: An RFC 3986 URI referring to the resource that is the subject of the signing.
-    :param statement: OPTIONAL. A human-readable assertion to show in the message that the user will sign.
-    :return: EIP-4361 formatted message, ready for EIP-191 signing.
+    Args:
+        domain: The domain that is requesting the signing. Its value MUST be an RFC 3986 authority.
+        address: The Ethereum address performing the signing.
+        chain_id: The Chain ID to which the session is bound.
+        uri: An RFC 3986 URI referring to the resource that is the subject of the signing.
+        statement: OPTIONAL. A human-readable assertion to show in the message that the user will sign.
+
+    Returns:
+        EIP-4361 formatted message, ready for EIP-191 signing.
     """
     nonce = generate_nonce()
 
@@ -85,13 +95,18 @@ def verify_siwe_message(message: str, signature: HexStr) -> None:
     """
     Verifies a Sign-In with Ethereum (SIWE) message and its associated signature.
 
-    :param message: The SIWE message as a string that needs to be verified.
-    :param signature: The cryptographic signature associated with the SIWE message.
-    :raises InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
-    :raises InvalidNonceError: If the nonce included in the SIWE message is invalid or expired.
-    :raises InvalidSignatureError: If the provided signature does not match the SIWE message.
-    :return: None. If no exceptions are raised, the message and signature are considered valid
+    Args:
+        message: The SIWE message as a string that needs to be verified.
+        signature: The cryptographic signature associated with the SIWE message.
+
+    Returns:
+        None. If no exceptions are raised, the message and signature are considered valid
         and the nonce is cleared from the cache to prevent reuse.
+
+    Raises:
+        InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
+        InvalidNonceError: If the nonce included in the SIWE message is invalid or expired.
+        InvalidSignatureError: If the provided signature does not match the SIWE message.
     """
     try:
         siwe_message = SiweMessage.from_message(message)
@@ -113,9 +128,14 @@ def get_siwe_message_info(message: str) -> SiweMessageInfo:
     """
     Extracts essential information from a Sign-In with Ethereum (SIWE) message.
 
-    :param message: The SIWE message as a string that needs to be parsed.
-    :raises InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
-    :return: A `SiweMessageInfo` object.
+    Args:
+        message: The SIWE message as a string that needs to be parsed.
+
+    Returns:
+        A `SiweMessageInfo` object.
+
+    Raises:
+        InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
     """
     try:
         siwe_message = SiweMessage.from_message(message)

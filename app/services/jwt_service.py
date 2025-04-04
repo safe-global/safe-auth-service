@@ -10,8 +10,11 @@ def create_jwt_token(siwe_message_info: SiweMessageInfo) -> str:
     """
     Creates a JSON Web Token (JWT) based on the provided Sign-In with Ethereum (SIWE) message information.
 
-    :param siwe_message_info: An object of type `SiweMessageInfo`.
-    :return: A signed JWT as a string.
+    Args:
+        siwe_message_info:  An object of type `SiweMessageInfo`.
+
+    Returns:
+        A signed JWT as a string.
     """
     payload = {
         "exp": datetime.now(UTC) + timedelta(seconds=settings.JWT_EXPIRATION_SECONDS),
