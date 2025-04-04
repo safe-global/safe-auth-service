@@ -136,7 +136,6 @@ def get_siwe_message_info(message: str) -> SiweMessageInfo:
 
     Raises:
         InvalidMessageFormatError: If the SIWE message format is invalid or unparseable.
-
     """
     try:
         siwe_message = SiweMessage.from_message(message)

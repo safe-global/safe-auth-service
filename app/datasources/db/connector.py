@@ -58,7 +58,7 @@ def set_database_session_context(
 
 
     Args:
-        session_id: Optional session id if is not provided will be generated automatically
+        session_id: Optional session ID. If not provided, it will be generated automatically.
 
     Yields:
         Generator function that yields control back to the caller.
@@ -95,13 +95,12 @@ def db_session_context(func):
     Remove the session at the end of the context.
 
     Args:
-        func (Callable): The function to be wrapped and executed within the database
+        func: The function to be wrapped and executed within the database
                           session context.
 
     Returns:
-        Callable: The wrapped function that ensures the database session context
+        The wrapped function that ensures the database session context
                   is set before the function executes and removed afterward.
-
     """
 
     @wraps(func)
