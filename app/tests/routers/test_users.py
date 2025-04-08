@@ -117,3 +117,10 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["token_type"], "bearer")
         self.assertTrue(response.json()["access_token"])
+
+        response = self.client.get(
+            "/api/v1/users/me",
+            headers={"Authorization": "Bearer " + response.json()["access_token"]},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["token"])

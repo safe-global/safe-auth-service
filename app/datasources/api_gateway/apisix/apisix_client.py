@@ -304,7 +304,7 @@ class ApisixClient(ApiGatewayClient):
             "plugins": {
                 "jwt-auth": {
                     "key": consumer_name,
-                    "algorithm": "RS256",
+                    "algorithm": settings.JWT_ALGORITHM,
                     "public_key": settings.JWT_PUBLIC_KEY,
                 }
             },

@@ -1,11 +1,10 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import cast
 
 from fastapi import HTTPException
 
 import bcrypt
-import jwt
 from starlette import status
 
 from ..config import settings
@@ -13,12 +12,7 @@ from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
 from ..datasources.email.email_provider import EmailProvider
 from ..models.users import Token
-
-# to get a string like this run:
-# openssl rand -hex 32
-SECRET_KEY = "d7b81ad8fe75d2399b9e15fcb16a48b3a33dd0548818e425a9b47ec8565c65fc"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from .jwt_service import JwtService
 
 
 class UserServiceException(Exception):
@@ -43,6 +37,10 @@ class TemporaryTokenExists(UserServiceException):
 
 class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
+
+    def __init__(self):
+        self.email_provider = EmailProvider()
+        self.jwt_service = JwtService()
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
@@ -110,8 +108,7 @@ class UserService:
         token = self.temporary_token_generate(
             self.TEMPORARY_TOKEN_REGISTRATION_PREFIX, email
         )
-        email_provider = EmailProvider()
-        email_provider.send_temporary_token_email(email, token)
+        self.email_provider.send_temporary_token_email(email, token)
         return token
 
     async def register_user(self, email: str, password: str, token: str) -> str:
@@ -147,18 +144,6 @@ class UserService:
             return user
         return None
 
-    def create_access_token(
-        self, data: dict, expires_delta: timedelta | None = None
-    ) -> str:
-        to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
-        else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
-
     async def login_user(self, email: str, password: str) -> Token:
         user = await self.authenticate_user(email, password)
         if not user:
@@ -167,8 +152,8 @@ class UserService:
                 detail="Incorrect username or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = self.create_access_token(
-            data={"sub": user.email}, expires_delta=access_token_expires
+        access_token_expires = timedelta(days=settings.JWT_AUTH_SERVICE_EXPIRE_DAYS)
+        access_token = self.jwt_service.create_access_token(
+            user.id.hex, access_token_expires, {}
         )
         return Token(access_token=access_token, token_type="bearer")

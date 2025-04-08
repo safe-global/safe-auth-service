@@ -23,12 +23,16 @@ class Settings(BaseSettings):
     NONCE_TTL_SECONDS: int = 60 * 10
     PRE_REGISTRATION_TOKEN_TTL_SECONDS: int = 60 * 10  # 10 minutes
 
-    # https://pyjwt.readthedocs.io/en/stable/usage.html#encoding-decoding-tokens-with-rs256-rsa
-    JWT_PRIVATE_KEY: str = ""  # RSA private key -----BEGIN ...
-    JWT_ISSUER: str = "safe-auth-service"
+    # https://pyjwt.readthedocs.io/en/stable/usage.html#encoding-decoding-tokens-with-es256-ecdsa
+    JWT_ALGORITHM: str = "ES256"
+    JWT_AUDIENCE: str = ""
+    JWT_AUTH_SERVICE_EXPIRE_DAYS: int = 7  # 1 week
     JWT_EXPIRATION_SECONDS: int = 24 * 60 * 60
-    JWT_COOKIE_NAME: str = "safe_access_token"
-    JWT_PUBLIC_KEY: str = ""  # RSA public key -----BEGIN ... To share with Apisix
+    JWT_ISSUER: str = "safe-auth-service"
+    JWT_PRIVATE_KEY: str = (
+        "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIHAhM7P6HG3LgkDvgvfDeaMA6uELj+jEKWsSeOpS/SfYoAoGCCqGSM49\nAwEHoUQDQgAEXHVxB7s5SR7I9cWwry/JkECIRekaCwG3uOLCYbw5gVzn4dRmwMyY\nUJFcQWuFSfECRK+uQOOXD0YSEucBq0p5tA==\n-----END EC PRIVATE KEY-----\n"
+    )
+    JWT_PUBLIC_KEY: str = ""
     DATABASE_URL: str = "psql://postgres:"
     DATABASE_POOL_CLASS: str = "AsyncAdaptedQueuePool"
     DATABASE_POOL_SIZE: int = 10
