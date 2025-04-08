@@ -19,7 +19,7 @@ from ..services.user_service import (
     UserService,
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/logins")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/login")
 
 router = APIRouter(
     prefix="/users",
@@ -62,7 +62,7 @@ async def register(user_request: RegistrationUser) -> RegistrationUserResponse:
         )
 
 
-@router.post("/logins")
+@router.post("/login")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
     user_service = UserService()
     token = await user_service.login_user(

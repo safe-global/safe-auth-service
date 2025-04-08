@@ -100,7 +100,7 @@ class TestUsers(AsyncDbTestCase):
         }
 
         # User database is empty, it should not work
-        response = self.client.post("/api/v1/users/logins", data=payload)
+        response = self.client.post("/api/v1/users/login", data=payload)
         self.assertEqual(response.status_code, 401)
 
         await self.test_register()
@@ -110,10 +110,10 @@ class TestUsers(AsyncDbTestCase):
             "username": user.email,
             "password": user.password + "not-valid",
         }
-        response = self.client.post("/api/v1/users/logins", data=payload_2)
+        response = self.client.post("/api/v1/users/login", data=payload_2)
         self.assertEqual(response.status_code, 401)
 
-        response = self.client.post("/api/v1/users/logins", data=payload)
+        response = self.client.post("/api/v1/users/login", data=payload)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["token_type"], "bearer")
         self.assertTrue(response.json()["access_token"])
