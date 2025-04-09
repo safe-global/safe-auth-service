@@ -16,7 +16,7 @@ async def get_user_from_jwt_token(
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> dict[str, Any]:
     try:
-        payload = jwt.decode(
+        return jwt.decode(
             token,
             settings.JWT_PRIVATE_KEY,
             algorithms=[settings.JWT_ALGORITHM],
@@ -27,11 +27,4 @@ async def get_user_from_jwt_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not decode credentials",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-    if payload.get("sub") is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return payload
+        ) from e
