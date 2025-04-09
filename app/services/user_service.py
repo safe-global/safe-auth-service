@@ -154,6 +154,6 @@ class UserService:
             )
         access_token_expires = timedelta(days=settings.JWT_AUTH_SERVICE_EXPIRE_DAYS)
         access_token = self.jwt_service.create_access_token(
-            user.id.hex, access_token_expires, [], {}
+            user.id.hex, access_token_expires, settings.JWT_AUDIENCE, {}
         )
         return Token(access_token=access_token, token_type="bearer")

@@ -125,6 +125,6 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["iss"], "safe-auth-service")
         self.assertTrue(response.json()["sub"])
-        self.assertEqual(response.json()["aud"], [])
+        self.assertEqual(response.json()["aud"], ["safe-auth-service"])
         self.assertIsInstance(response.json()["exp"], int)
         self.assertEqual(response.json()["data"], {})

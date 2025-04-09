@@ -17,7 +17,10 @@ async def get_user_from_jwt_token(
 ) -> dict[str, Any]:
     try:
         payload = jwt.decode(
-            token, settings.JWT_PRIVATE_KEY, algorithms=[settings.JWT_ALGORITHM]
+            token,
+            settings.JWT_PRIVATE_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+            audience=settings.JWT_AUDIENCE,
         )
     except InvalidTokenError as e:
         raise HTTPException(
