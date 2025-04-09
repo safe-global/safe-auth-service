@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 
 from starlette import status
 
@@ -18,8 +18,7 @@ from ..services.user_service import (
     UserAlreadyExists,
     UserService,
 )
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/login")
+from .auth import get_user_from_jwt_token
 
 router = APIRouter(
     prefix="/users",
@@ -73,5 +72,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
 
 
 @router.get("/me")
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    return {"token": token}
+async def get_current_user(
+    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+):
+    return current_user

@@ -123,4 +123,8 @@ class TestUsers(AsyncDbTestCase):
             headers={"Authorization": "Bearer " + response.json()["access_token"]},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["token"])
+        self.assertEqual(response.json()["iss"], "safe-auth-service")
+        self.assertTrue(response.json()["sub"])
+        self.assertEqual(response.json()["aud"], [])
+        self.assertIsInstance(response.json()["exp"], int)
+        self.assertEqual(response.json()["data"], {})
