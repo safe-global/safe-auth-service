@@ -1,24 +1,46 @@
 import uuid
+from datetime import timedelta
 from typing import cast
 
+from fastapi import HTTPException
+
 import bcrypt
+from starlette import status
 
 from ..config import settings
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
 from ..datasources.email.email_provider import EmailProvider
+from ..models.users import Token
+from .jwt_service import JwtService
 
 
-class TemporaryTokenNotValid(Exception):
+class UserServiceException(Exception):
     pass
 
 
-class TemporaryTokenExists(Exception):
+class TemporaryTokenNotValid(UserServiceException):
+    pass
+
+
+class UserAlreadyExists(UserServiceException):
+    pass
+
+
+class UserNotFound(UserServiceException):
+    pass
+
+
+class TemporaryTokenExists(UserServiceException):
     pass
 
 
 class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
+
+    def __init__(self):
+        self.email_provider = EmailProvider()
+        self.jwt_service = JwtService()
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
@@ -86,8 +108,7 @@ class UserService:
         token = self.temporary_token_generate(
             self.TEMPORARY_TOKEN_REGISTRATION_PREFIX, email
         )
-        email_provider = EmailProvider()
-        email_provider.send_temporary_token_email(email, token)
+        self.email_provider.send_temporary_token_email(email, token)
         return token
 
     async def register_user(self, email: str, password: str, token: str) -> str:
@@ -102,14 +123,37 @@ class UserService:
 
         Raises:
             TemporaryTokenNotValid: if the temporary token is not valid
+            UserAlreadyExists: user with the provided email exists in the database
         """
 
         if not self.temporary_token_is_valid(
             self.TEMPORARY_TOKEN_REGISTRATION_PREFIX, email, token
         ):
             raise TemporaryTokenNotValid(f"Temporary token not valid for {email}")
+        if await User.get_by_email(email):
+            raise UserAlreadyExists(f"User with email {email} already exists")
         hashed_password = self.hash_password(password)
         user_uuid = uuid.uuid4().hex
         user = User(id=user_uuid, email=email, hashed_password=hashed_password)
         await user.create()
         return user_uuid
+
+    async def authenticate_user(self, email: str, password: str) -> User | None:
+        user = await User.get_by_email(email)
+        if user and self.verify_password(password, user.hashed_password):
+            return user
+        return None
+
+    async def login_user(self, email: str, password: str) -> Token:
+        user = await self.authenticate_user(email, password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        access_token_expires = timedelta(days=settings.JWT_AUTH_SERVICE_EXPIRE_DAYS)
+        access_token = self.jwt_service.create_access_token(
+            user.id.hex, access_token_expires, settings.JWT_AUDIENCE, {}
+        )
+        return Token(access_token=access_token, token_type="bearer")

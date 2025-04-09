@@ -166,7 +166,7 @@ class TestApisixClient(IsolatedAsyncioTestCase):
             consumer.plugins,
             {
                 "jwt-auth": {
-                    "algorithm": "RS256",
+                    "algorithm": "ES256",
                     "base64_secret": False,
                     "exp": 86400,
                     "key": "consumer_one",
@@ -217,7 +217,7 @@ class TestApisixClient(IsolatedAsyncioTestCase):
                 {
                     "jwt-auth": {
                         "public_key": "old key",
-                        "algorithm": "RS256",
+                        "algorithm": "ES256",
                         "base64_secret": False,
                         "exp": 86400,
                         "key": consumer.name,
@@ -236,7 +236,7 @@ class TestApisixClient(IsolatedAsyncioTestCase):
                 {
                     "jwt-auth": {
                         "public_key": "new key",
-                        "algorithm": "RS256",
+                        "algorithm": "ES256",
                         "base64_secret": False,
                         "exp": 86400,
                         "key": consumer.name,
