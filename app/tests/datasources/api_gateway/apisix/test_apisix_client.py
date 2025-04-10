@@ -171,7 +171,10 @@ class TestApisixClient(IsolatedAsyncioTestCase):
                     "exp": 86400,
                     "key": "consumer_one",
                     "lifetime_grace_period": 0,
-                    "public_key": "",
+                    "public_key": "-----BEGIN PUBLIC KEY-----\n"
+                    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXHVxB7s5SR7I9cWwry/JkECIReka\n"
+                    "CwG3uOLCYbw5gVzn4dRmwMyYUJFcQWuFSfECRK+uQOOXD0YSEucBq0p5tA==\n"
+                    "-----END PUBLIC KEY-----\n",
                 }
             },
         )
