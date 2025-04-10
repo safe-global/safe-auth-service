@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "ES256"
     JWT_AUDIENCE: list[str] = ["safe-auth-service"]
     JWT_AUTH_SERVICE_EXPIRE_DAYS: int = 7  # 1 week
+    JWT_API_KEY_EXPIRE_DAYS: int = 1 * 365  # 1 year
     JWT_ISSUER: str = "safe-auth-service"
     JWT_PRIVATE_KEY: str = (
         "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIHAhM7P6HG3LgkDvgvfDeaMA6uELj+jEKWsSeOpS/SfYoAoGCCqGSM49\nAwEHoUQDQgAEXHVxB7s5SR7I9cWwry/JkECIRekaCwG3uOLCYbw5gVzn4dRmwMyY\nUJFcQWuFSfECRK+uQOOXD0YSEucBq0p5tA==\n-----END EC PRIVATE KEY-----\n"

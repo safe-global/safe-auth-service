@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from typing import Self
+from typing import Self, Sequence
 
 from sqlalchemy import DateTime, func
 from sqlmodel import Field, SQLModel, col, delete, select
@@ -42,6 +42,7 @@ class User(SqlQueryBase, SQLModel, table=True):
         if user := result.first():
             return user[0]
         return None
+
 
 class ApiKey(SqlQueryBase, SQLModel, table=True):
     id: uuid.UUID = Field(primary_key=True)
@@ -85,9 +86,24 @@ class ApiKey(SqlQueryBase, SQLModel, table=True):
         """
         query = (
             delete(cls)
-            .where(col(cls.id) == api_key_id)
             .where(col(cls.user_id) == user_id)
+            .where(col(cls.id) == api_key_id)
         )
         result = await db_session.execute(query)
-
+        await db_session.commit()
         return True if result.rowcount == 1 else False
+
+    @classmethod
+    async def get_api_keys_by_user(cls, user_id: uuid.UUID) -> Sequence["ApiKey"]:
+        """
+        Get an ApiKeys by user id.
+
+        Args:
+            user_id:
+
+        Returns: List of ApiKeys.
+
+        """
+        query = select(cls).where(cls.user_id == user_id)
+        result = await db_session.execute(query)
+        return result.scalars().all()
