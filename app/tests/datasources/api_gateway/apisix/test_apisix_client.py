@@ -10,7 +10,7 @@ class TestApisixClient(IsolatedAsyncioTestCase):
     apisix_client: ApiGatewayClient
 
     async def asyncSetUp(self):
-        self.apisix_client = get_apisix_client("http://localhost:9180", "apisix")
+        self.apisix_client = get_apisix_client()
 
     def setUp(self):
         get_apisix_client.cache_clear()
