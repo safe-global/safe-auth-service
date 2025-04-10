@@ -29,17 +29,17 @@ async def create_api_key(
     """
     Create a new api key for the authenticated user.
 
-    Returns:
+    Returns: the new api key.
 
     """
-
-    return await generate_api_key(current_user["sub"])
+    user_id = current_user["sub"]
+    return await generate_api_key(user_id)
 
 
 @router.get("/{api_key_id}")
 async def get_api_key(
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
     api_key_id: uuid.UUID,
+    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
 ):
     """
     Get an existing api key for the authenticated user.
@@ -47,7 +47,7 @@ async def get_api_key(
     Args:
         api_key_id:
 
-    Returns:
+    Returns: the existing api key.
 
     """
     user_id = current_user["sub"]
@@ -61,10 +61,11 @@ async def get_api_keys(current_user: Annotated[dict, Depends(get_user_from_jwt_t
     """
     Get all existing api keys for the authenticated user.
 
-    Returns:
+    Returns: list with the existing api keys.
 
     """
-    return await get_api_keys_by_user(current_user["sub"])
+    user_id = current_user["sub"]
+    return await get_api_keys_by_user(user_id)
 
 
 @router.delete(

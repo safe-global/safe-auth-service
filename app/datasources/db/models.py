@@ -96,13 +96,13 @@ class ApiKey(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
     @classmethod
     async def delete_by_ids(cls, api_key_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """
-        Delete an ApiKey by api_key_id and user_id.
+        Delete an ApiKey by api key id and user id.
 
         Args:
             api_key_id:
             user_id:
 
-        Returns: True if deleted false otherwise.
+        Returns: True if deleted False otherwise.
 
         """
         query = (
@@ -117,7 +117,7 @@ class ApiKey(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
     @classmethod
     async def get_api_keys_by_user(cls, user_id: uuid.UUID) -> Sequence["ApiKey"]:
         """
-        Get an ApiKeys by user id.
+        Get a list of ApiKeys by user id.
 
         Args:
             user_id:
