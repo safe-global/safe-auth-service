@@ -27,6 +27,30 @@ class SqlQueryBase:
         return await self._save()
 
 
+class TimeStampedSQLModel(SQLModel):
+    """
+    An abstract base class model that provides self-updating
+    ``created`` and ``modified`` fields.
+
+    """
+
+    created: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=False,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        index=True,
+    )
+
+    modified: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc),
+        nullable=False,
+        sa_type=DateTime(timezone=True),  # type: ignore
+        sa_column_kwargs={
+            "onupdate": lambda: datetime.datetime.now(datetime.timezone.utc),
+        },
+    )
+
+
 class User(SqlQueryBase, SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     email: str = Field(nullable=False, index=True, unique=True)
@@ -44,13 +68,10 @@ class User(SqlQueryBase, SQLModel, table=True):
         return None
 
 
-class ApiKey(SqlQueryBase, SQLModel, table=True):
+class ApiKey(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
     id: uuid.UUID = Field(primary_key=True)
     user_id: uuid.UUID = Field(nullable=False, foreign_key="user.id")
-    created_at: datetime.datetime = Field(
-        nullable=False, sa_type=DateTime(timezone=True)  # type: ignore
-    )
-    token: str = Field(nullable=False)
+    token: str = Field(nullable=False, unique=True)
 
     @classmethod
     async def get_by_ids(cls, api_key_id: uuid.UUID, user_id: uuid.UUID):

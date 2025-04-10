@@ -21,14 +21,13 @@ async def generate_api_key(user_id: uuid.UUID) -> ApiKeyPublic:
     Returns: serialized ApiKeyPublic object.
 
     """
-    api_key_id = uuid.uuid4()
-    now = datetime.datetime.now(datetime.timezone.utc)
+    api_key_id = uuid.uuid4().hex
     access_token_expires = datetime.timedelta(days=settings.JWT_API_KEY_EXPIRE_DAYS)
-    subject = f"{user_id}{str(api_key_id)}"
+    subject = f"{user_id}{api_key_id}"
     access_token = JwtService.create_access_token(
         subject, access_token_expires, settings.JWT_AUDIENCE, {}
     )
-    api_key = ApiKey(id=api_key_id, user_id=user_id, token=access_token, created_at=now)
+    api_key = ApiKey(id=api_key_id, user_id=user_id, token=access_token)
     logging.info(f"Generated new api key {api_key.id}")
     await api_key.create()
     return ApiKeyPublic.model_validate(api_key)

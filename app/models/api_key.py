@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 class ApiKeyPublic(BaseModel):
     id: uuid.UUID
-    created_at: datetime.datetime
+    created: datetime.datetime
     token: str
 
     class Config:
