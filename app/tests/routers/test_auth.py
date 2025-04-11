@@ -36,4 +36,4 @@ class TestAuth(unittest.IsolatedAsyncioTestCase):
             await get_user_from_jwt_token(token)
 
         self.assertEqual(context.exception.status_code, 401)
-        self.assertEqual(context.exception.detail, "Could not decode credentials")
+        self.assertEqual(context.exception.detail, "The provided JWT token has expired")

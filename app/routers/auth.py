@@ -22,7 +22,13 @@ async def get_user_from_jwt_token(
             algorithms=[settings.JWT_ALGORITHM],
             audience=settings.JWT_AUDIENCE,
         )
-    except (InvalidTokenError, ExpiredSignatureError) as e:
+    except ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="The provided JWT token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+    except InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not decode credentials",
