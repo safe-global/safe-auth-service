@@ -11,6 +11,10 @@ from app.datasources.api_gateway.apisix.apisix_metrics import (
 from app.datasources.metrics.datadog.datadog_client import get_datadog_client
 from app.datasources.metrics.exceptions import MetricsRequestError
 from app.models.metrics import TimeSeriesMetricData
+from app.tests.mocks.datadog_api import (
+    datadog_time_series_empty_response,
+    datadog_time_series_response,
+)
 
 
 class TestDatadogClient(IsolatedAsyncioTestCase):
@@ -25,41 +29,7 @@ class TestDatadogClient(IsolatedAsyncioTestCase):
     async def test_get_metric_series_success(self, mock_get):
         mock_response = AsyncMock()
         mock_response.ok = True
-        mock_response.json = AsyncMock(
-            return_value={
-                "status": "ok",
-                "res_type": "time_series",
-                "resp_version": 1,
-                "query": "apisix.request.latency.median{*}",
-                "from_date": 1744182650000,
-                "to_date": 1744190450000,
-                "series": [
-                    {
-                        "unit": None,
-                        "query_index": 0,
-                        "aggr": None,
-                        "metric": "apisix.request.latency.median",
-                        "tag_set": [],
-                        "expression": "apisix.request.latency.median{*}",
-                        "scope": "*",
-                        "interval": 30,
-                        "length": 2,
-                        "start": 1744190130000,
-                        "end": 1744190189000,
-                        "pointlist": [
-                            [1744190130000.0, 3.000020980835],
-                            [1744190160000.0, 1.5000104904175],
-                        ],
-                        "display_name": "apisix.request.latency.median",
-                        "attributes": {},
-                    }
-                ],
-                "values": [],
-                "times": [],
-                "message": "",
-                "group_by": [],
-            }
-        )
+        mock_response.json = AsyncMock(return_value=datadog_time_series_response)
         mock_get.return_value = mock_response
 
         metric = ApisixAggregatedMetric(
@@ -106,21 +76,7 @@ class TestDatadogClient(IsolatedAsyncioTestCase):
     async def test_get_metric_series_returns_none_when_no_series(self, mock_get):
         mock_response = AsyncMock()
         mock_response.ok = True
-        mock_response.json = AsyncMock(
-            return_value={
-                "status": "ok",
-                "res_type": "time_series",
-                "resp_version": 1,
-                "query": "apisix.request.latency.median{*}",
-                "from_date": 1744182650000,
-                "to_date": 1744190450000,
-                "series": [],
-                "values": [],
-                "times": [],
-                "message": "",
-                "group_by": [],
-            }
-        )
+        mock_response.json = AsyncMock(return_value=datadog_time_series_empty_response)
         mock_get.return_value = mock_response
 
         metric = ApisixAggregatedMetric(
