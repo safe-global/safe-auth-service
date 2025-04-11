@@ -84,7 +84,8 @@ async def delete_api_key(
 
     """
     user_id = current_user["sub"]
-    if await get_api_key_by_ids(api_key_id, user_id) is None:
+
+    if await delete_api_key_by_id(api_key_id, user_id) is False:
         raise HTTPException(status_code=404)
-    if await delete_api_key_by_id(api_key_id, user_id) is True:
-        return None
+
+    return None  # No content response
