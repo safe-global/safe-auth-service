@@ -1,0 +1,2 @@
+class MetricsRequestError(Exception):
+    pass

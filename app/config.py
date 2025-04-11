@@ -36,7 +36,15 @@ class Settings(BaseSettings):
     JWT_PUBLIC_KEY: str = ""
 
     # Apisix ---------------
+    APISIX_BASE_URL: str = ""
+    APISIX_API_KEY: str = ""
     APISIX_CONNECTIONS_POOL_SIZE: int = 100
+
+    # Datadog ---------------
+    DATADOG_BASE_URL: str = "https://api.datadoghq.eu"
+    DATADOG_API_KEY: str = ""
+    DATADOG_APP_KEY: str = ""
+    DATADOG_CONNECTIONS_POOL_SIZE: int = 100
 
 
 settings = Settings()

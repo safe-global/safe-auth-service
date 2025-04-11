@@ -15,22 +15,20 @@ logger = logging.getLogger(__name__)
 
 
 @cache
-def get_apisix_client(
-    base_url: str, api_key: str | None = None, request_timeout: int = 10
-) -> "ApisixClient":
+def get_apisix_client(request_timeout: int = 10) -> "ApisixClient":
     """
     Creates and returns an ApisixClient instance.
 
     Args:
-        base_url: The base URL for the Apisix API.
-        api_key: The API key for authenticating requests.
         request_timeout: The timeout (in seconds) for HTTP requests.
 
     Returns:
         An instance of ApisixClient.
     """
     return ApisixClient(
-        base_url=base_url, api_key=api_key, request_timeout=request_timeout
+        base_url=settings.APISIX_BASE_URL,
+        api_key=settings.APISIX_API_KEY,
+        request_timeout=request_timeout,
     )
 
 
