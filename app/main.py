@@ -13,7 +13,7 @@ from .datasources.db.connector import (
     set_database_session_context,
 )
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
-from .routers import about, default, users
+from .routers import about, api_keys, default, users
 
 logger = logging.getLogger()
 
@@ -57,6 +57,7 @@ api_v1_router = APIRouter(
 )
 api_v1_router.include_router(about.router)
 api_v1_router.include_router(users.router)
+api_v1_router.include_router(api_keys.router)
 app.include_router(api_v1_router)
 app.include_router(default.router)
 
