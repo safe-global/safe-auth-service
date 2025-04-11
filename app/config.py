@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     DATABASE_POOL_SIZE: int = 10
     PRE_REGISTRATION_TOKEN_TTL_SECONDS: int = 60 * 10  # 10 minutes
 
+    # Email -----------------
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_SERVER: str = ""
+    SMTP_PORT: int = 25
+    SMTP_FROM_ADDRESS: str = "safe-auth-service-no-reply@safe.global"
+    SMTP_TEST_API_URL: str = ""  # API url for testing smtp4dev
+
     # JWT -------------------
     # https://pyjwt.readthedocs.io/en/stable/usage.html#encoding-decoding-tokens-with-es256-ecdsa
     JWT_ALGORITHM: str = "ES256"
@@ -32,7 +40,6 @@ class Settings(BaseSettings):
     JWT_AUTH_SERVICE_EXPIRE_DAYS: int = 7  # 1 week
     JWT_API_KEY_EXPIRE_DAYS: int = 1 * 365  # 1 year
     JWT_ISSUER: str = "safe-auth-service"
-    # Set default private and public key from the docs
     JWT_PRIVATE_KEY: str = ""
     JWT_PUBLIC_KEY: str = ""
 

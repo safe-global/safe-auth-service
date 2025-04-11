@@ -67,3 +67,9 @@ services:
     ports:
       - "9180:9180/tcp"
       - "9080:9080/tcp"
+
+  mail:
+    image: rnwood/smtp4dev:latest
+    ports:
+      - "2525:25/tcp"
+      - "5000:80/tcp"

@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from app.datasources.cache.redis import get_redis
 from app.datasources.db.connector import db_session_context
 from app.datasources.db.models import User
-from app.datasources.email.email_provider import EmailProvider
+from app.datasources.email.email_client import EmailClient
 from app.main import app
 from app.models.users import RegistrationUser
 
@@ -38,7 +38,7 @@ class TestUsers(AsyncDbTestCase):
         payload = {"email": user.email}
 
         with mock.patch.object(
-            EmailProvider, "send_temporary_token_email"
+            EmailClient, "send_temporary_token_email"
         ) as send_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
@@ -71,7 +71,7 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(count, 0)
 
         with mock.patch.object(
-            EmailProvider, "send_temporary_token_email"
+            EmailClient, "send_temporary_token_email"
         ) as send_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
