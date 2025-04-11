@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 
 import jwt
-from jwt import InvalidTokenError
+from jwt import ExpiredSignatureError, InvalidTokenError
 from starlette import status
 
 from app.config import settings
@@ -22,7 +22,7 @@ async def get_user_from_jwt_token(
             algorithms=[settings.JWT_ALGORITHM],
             audience=settings.JWT_AUDIENCE,
         )
-    except InvalidTokenError as e:
+    except (InvalidTokenError, ExpiredSignatureError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not decode credentials",
