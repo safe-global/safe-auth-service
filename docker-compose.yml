@@ -37,6 +37,11 @@ services:
       - "8888:8888"
     volumes:
       - nginx-shared:/nginx
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     command: docker/web/run_web.sh
 
   redis:
@@ -45,6 +50,10 @@ services:
       - "6379:6379"
     command:
       - --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      timeout: 5s
+      retries: 3
 
   etcd:
     image: bitnami/etcd:latest
@@ -72,4 +81,4 @@ services:
     image: rnwood/smtp4dev:latest
     ports:
       - "2525:25/tcp"
-      - "5000:80/tcp"
+      - "2526:80/tcp"

@@ -83,7 +83,7 @@ jobs:
         docker run --detach --network apisix-network --name apisix  --publish 9080:9080 --publish 9180:9180 -v ./docker/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro apache/apisix:latest
     - name: Setup and run smtp4dev
       run: |
-        docker run --detach --name mail -p 5000:80 -p 2525:25 rnwood/smtp4dev:latest
+        docker run --detach --name mail -p 2526:80 -p 2525:25 rnwood/smtp4dev:latest
     - name: Run tests and coverage
       run: |
         coverage run --source=$SOURCE_FOLDER -m pytest -rxXs
