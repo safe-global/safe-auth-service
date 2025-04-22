@@ -139,8 +139,7 @@ class DatadogClient:
         ]
 
         return TimeSeriesMetricData(
-            metric=series_data.get("metric"),
-            scope=series_data.get("scope"),
+            query=series_data.get("expression") or series_data.get("metric"),
             point_list_interval=series_data.get("interval"),
             point_list_length=len(point_list),
             point_list=point_list,
@@ -150,5 +149,4 @@ class DatadogClient:
             point_list_end_datetime=datetime.datetime.fromtimestamp(
                 series_data.get("end") / 1000, tz=datetime.timezone.utc
             ),
-            display_name=series_data.get("display_name"),
         )

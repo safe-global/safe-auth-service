@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     DATADOG_APP_KEY: str = ""
     DATADOG_CONNECTIONS_POOL_SIZE: int = 100
 
+    # Prometheus ---------------
+    PROMETHEUS_BASE_URL: str = ""
+    PROMETHEUS_CONNECTIONS_POOL_SIZE: int = 100
+
 
 settings = Settings()
 
