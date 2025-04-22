@@ -1,6 +1,11 @@
 apisix:
   node_listen: 9080
 
+  enable_control: true
+  control:
+    ip: "0.0.0.0"
+    port: 9092
+
 deployment:
   admin:
     allow_admin:
@@ -16,3 +21,13 @@ deployment:
       - "http://etcd:2379"
     prefix: "/apisix"
     timeout: 30
+
+plugin_attr:
+  prometheus:
+    export_addr:
+      ip: "0.0.0.0"
+      port: 9091
+    metrics:
+      http_status:
+        extra_labels:
+          - request_uri: $request_uri

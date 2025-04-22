@@ -77,6 +77,22 @@ services:
       - "9180:9180/tcp"
       - "9080:9080/tcp"
 
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.0-alpine
+    volumes:
+      - ./docker/apisix_dashboard/config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
+    depends_on:
+      - etcd
+    ports:
+      - "9000:9000/tcp"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./docker/prometheus/config.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
   mail:
     image: rnwood/smtp4dev:latest
     ports:
