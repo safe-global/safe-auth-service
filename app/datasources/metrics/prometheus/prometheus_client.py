@@ -1,4 +1,5 @@
 import datetime
+import logging
 from functools import cache
 from typing import Any
 
@@ -9,6 +10,8 @@ from safe_eth.util.http import build_full_url
 from ....config import settings
 from ....datasources.metrics.exceptions import MetricsRequestError
 from ....models.metrics import TimeSeriesMetricData
+
+logger = logging.getLogger(__name__)
 
 
 @cache
@@ -101,6 +104,9 @@ class PrometheusClient:
         """
         result_status = response_json.get("status")
         if result_status != "success":
+            logger.error(
+                f"Error while parsing response from Prometheus API: {response_json}"
+            )
             return []
 
         result_data = response_json["data"]
