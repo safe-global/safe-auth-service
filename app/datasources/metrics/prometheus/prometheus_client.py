@@ -1,5 +1,6 @@
 import datetime
 from functools import cache
+from typing import Any
 
 import aiohttp
 from aiohttp import ClientTimeout
@@ -69,9 +70,16 @@ class PrometheusClient:
 
         return response
 
+    def _get_raw_points(self, entry: dict[str, Any], result_type: str) -> list:
+        if result_type == "vector":
+            return [entry["value"]] if entry.get("value") else []
+        elif result_type == "matrix":
+            return entry.get("values", [])
+        return []
+
     def _parse_api_response(
         self,
-        response_json: dict,
+        response_json: dict[str, Any],
         query: str,
         start_time: datetime.datetime,
         end_time: datetime.datetime,
@@ -101,18 +109,16 @@ class PrometheusClient:
         series_list: list[TimeSeriesMetricData] = []
 
         for entry in results:
-            raw_points = []
-            if result_type == "vector":
-                raw_points = [entry["value"]] if entry.get("value") else []
-            elif result_type == "matrix":
-                raw_points = entry.get("values", [])
-
             point_list = [
                 (
-                    datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc),
-                    float(value),
+                    datetime.datetime.fromtimestamp(
+                        point_timestamp, tz=datetime.timezone.utc
+                    ),
+                    point_value,
                 )
-                for ts, value in raw_points
+                for point_timestamp, point_value in self._get_raw_points(
+                    entry, result_type
+                )
             ]
 
             series = TimeSeriesMetricData(
