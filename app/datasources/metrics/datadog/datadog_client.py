@@ -26,6 +26,7 @@ def get_datadog_client(request_timeout: int = 10) -> "DatadogClient":
         base_url=settings.DATADOG_BASE_URL,
         api_key=settings.DATADOG_API_KEY,
         app_key=settings.DATADOG_APP_KEY,
+        connections_pool_size=settings.DATADOG_CONNECTIONS_POOL_SIZE,
         request_timeout=request_timeout,
     )
 
@@ -34,7 +35,12 @@ class DatadogClient:
     """Client for querying metrics from Datadog."""
 
     def __init__(
-        self, base_url: str, api_key: str, app_key: str, request_timeout: int = 10
+        self,
+        base_url: str,
+        api_key: str,
+        app_key: str,
+        connections_pool_size: int = 100,
+        request_timeout: int = 10,
     ):
         """
 
@@ -48,7 +54,7 @@ class DatadogClient:
         self.api_key = api_key
         self.app_key = app_key
         self.async_session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(limit=settings.DATADOG_CONNECTIONS_POOL_SIZE)
+            connector=aiohttp.TCPConnector(limit=connections_pool_size)
         )
         self.request_timeout = request_timeout
 

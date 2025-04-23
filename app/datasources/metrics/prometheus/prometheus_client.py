@@ -24,6 +24,7 @@ def get_prometheus_client(request_timeout: int = 10) -> "PrometheusClient":
     """
     return PrometheusClient(
         base_url=settings.PROMETHEUS_BASE_URL,
+        connections_pool_size=settings.PROMETHEUS_CONNECTIONS_POOL_SIZE,
         request_timeout=request_timeout,
     )
 
@@ -31,7 +32,9 @@ def get_prometheus_client(request_timeout: int = 10) -> "PrometheusClient":
 class PrometheusClient:
     """Client for querying metrics from Prometheus."""
 
-    def __init__(self, base_url: str, request_timeout: int = 10):
+    def __init__(
+        self, base_url: str, connections_pool_size: int = 100, request_timeout: int = 10
+    ):
         """
 
         Args:
@@ -40,9 +43,7 @@ class PrometheusClient:
         """
         self.base_url = base_url
         self.async_session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(
-                limit=settings.PROMETHEUS_CONNECTIONS_POOL_SIZE
-            )
+            connector=aiohttp.TCPConnector(limit=connections_pool_size)
         )
         self.request_timeout = request_timeout
 
