@@ -51,10 +51,8 @@ class TestDatadogClient(IsolatedAsyncioTestCase):
 
         assert result is not None
         self.assertIsInstance(result, TimeSeriesMetricData)
-        self.assertEqual(result.metric, "apisix.request.latency.median")
         self.assertEqual(result.point_list_length, 2)
-        self.assertEqual(result.scope, "*")
-        self.assertEqual(result.display_name, "apisix.request.latency.median")
+        self.assertEqual(result.query, "apisix.request.latency.median{*}")
         self.assertEqual(result.point_list_interval, 30)
         self.assertEqual(
             result.point_list,

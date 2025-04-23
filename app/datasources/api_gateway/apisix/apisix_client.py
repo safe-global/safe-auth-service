@@ -28,13 +28,18 @@ def get_apisix_client(request_timeout: int = 10) -> "ApisixClient":
     return ApisixClient(
         base_url=settings.APISIX_BASE_URL,
         api_key=settings.APISIX_API_KEY,
+        connections_pool_size=settings.APISIX_CONNECTIONS_POOL_SIZE,
         request_timeout=request_timeout,
     )
 
 
 class ApisixClient(ApiGatewayClient):
     def __init__(
-        self, base_url: str, api_key: str | None = None, request_timeout: int = 10
+        self,
+        base_url: str,
+        api_key: str | None = None,
+        connections_pool_size: int = 100,
+        request_timeout: int = 10,
     ):
         """
 
@@ -46,7 +51,7 @@ class ApisixClient(ApiGatewayClient):
         self.base_url = base_url
         self.api_key = api_key
         self.async_session = aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(limit=settings.APISIX_CONNECTIONS_POOL_SIZE)
+            connector=aiohttp.TCPConnector(limit=connections_pool_size)
         )
         self.request_timeout = request_timeout
 

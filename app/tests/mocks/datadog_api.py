@@ -36,7 +36,7 @@ datadog_time_series_response: dict[str, Any] = {
     "group_by": [],
 }
 
-datadog_time_series_empty_response = {
+datadog_time_series_empty_response: dict[str, Any] = {
     "status": "ok",
     "res_type": "time_series",
     "resp_version": 1,
