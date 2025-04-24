@@ -157,3 +157,27 @@ class UserService:
             user.id.hex, access_token_expires, settings.JWT_AUDIENCE, {}
         )
         return Token(access_token=access_token, token_type="bearer")
+
+    async def change_password(
+        self, user: User, old_password: str, new_password: str
+    ) -> bool:
+        """
+        Changes the password for an authenticated user.
+        Checks if the old password is correct.
+
+        Args:
+            user: User instance
+            old_password: Old password
+            new_password: Password to update
+
+        Returns: True if the password was changed or False otherwise.
+
+        """
+        if not self.verify_password(old_password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Incorrect password",
+            )
+
+        hashed_password = self.hash_password(new_password)
+        return await User.update_password(user.id, hashed_password)
