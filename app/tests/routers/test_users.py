@@ -157,13 +157,23 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["token_type"], "bearer")
         self.assertTrue(response.json()["access_token"])
+        access_token = response.json()["access_token"]
 
+        # Test wrong old password
         response = self.client.post(
             "/api/v1/users/change-password",
             json=change_password_payload,
-            headers={"Authorization": "Bearer " + response.json()["access_token"]},
+            headers={"Authorization": "Bearer " + access_token},
         )
         self.assertEqual(response.status_code, 204)
+
+        # Should return 403 due password was changed
+        response = self.client.post(
+            "/api/v1/users/change-password",
+            json=change_password_payload,
+            headers={"Authorization": "Bearer " + access_token},
+        )
+        self.assertEqual(response.status_code, 403)
 
         response = self.client.post("/api/v1/users/login", data=login_payload)
         self.assertEqual(response.status_code, 401)

@@ -36,6 +36,10 @@ class TemporaryTokenExists(UserServiceException):
     pass
 
 
+class WrongPassword(UserServiceException):
+    pass
+
+
 class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
 
@@ -179,10 +183,7 @@ class UserService:
             logging.critical(f"User {user_id} not found")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         if not self.verify_password(old_password, user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Incorrect password",
-            )
+            raise WrongPassword("Incorrect password")
 
         hashed_password = self.hash_password(new_password)
         return await User.update_password(user.id, hashed_password)
