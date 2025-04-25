@@ -12,7 +12,7 @@ from ..services.api_key_service import (
     get_api_key_by_ids,
     get_api_keys_by_user,
 )
-from .auth import get_user_from_jwt_token
+from .auth import get_jwt_info_from_user_token
 
 router = APIRouter(
     prefix="/api-keys",
@@ -26,7 +26,7 @@ router = APIRouter(
 )
 async def create_api_key(
     api_key_info: ApiKeyInfo,
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+    current_user: Annotated[dict, Depends(get_jwt_info_from_user_token)],
 ):
     """
     Create a new api key for the authenticated user.
@@ -44,7 +44,7 @@ async def create_api_key(
 @router.get("/{api_key_id}")
 async def get_api_key(
     api_key_id: uuid.UUID,
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+    current_user: Annotated[dict, Depends(get_jwt_info_from_user_token)],
 ):
     """
     Get an existing api key for the authenticated user.
@@ -62,7 +62,9 @@ async def get_api_key(
 
 
 @router.get("/")
-async def get_api_keys(current_user: Annotated[dict, Depends(get_user_from_jwt_token)]):
+async def get_api_keys(
+    current_user: Annotated[dict, Depends(get_jwt_info_from_user_token)],
+):
     """
     Get all existing api keys for the authenticated user.
 
@@ -79,7 +81,7 @@ async def get_api_keys(current_user: Annotated[dict, Depends(get_user_from_jwt_t
 )
 async def delete_api_key(
     api_key_id: uuid.UUID,
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+    current_user: Annotated[dict, Depends(get_jwt_info_from_user_token)],
 ):
     """
     Delete an existing api key for the authenticated user.

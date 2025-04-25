@@ -2,6 +2,8 @@ from unittest import mock
 
 from fastapi.testclient import TestClient
 
+import faker
+
 from app.datasources.cache.redis import get_redis
 from app.datasources.db.connector import db_session_context
 from app.datasources.db.models import User
@@ -10,6 +12,8 @@ from app.main import app
 from app.models.users import RegistrationUser
 
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
+
+fake = faker.Faker()
 
 
 class TestUsers(AsyncDbTestCase):
@@ -128,3 +132,42 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(response.json()["aud"], ["safe-auth-service"])
         self.assertIsInstance(response.json()["exp"], int)
         self.assertEqual(response.json()["data"], {})
+
+    @db_session_context
+    async def test_change_password(self):
+        user = self.get_example_registration_user()
+        new_password = fake.password()
+        change_password_payload = {
+            "old_password": user.password,
+            "new_password": new_password,
+        }
+        response = self.client.post(
+            "/api/v1/users/change-password",
+            json=change_password_payload,
+            headers={"Authorization": "Bearer " + fake.password()},
+        )
+        self.assertEqual(response.status_code, 401)
+
+        login_payload = {
+            "username": user.email,
+            "password": user.password,
+        }
+        await self.test_register()
+        response = self.client.post("/api/v1/users/login", data=login_payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["token_type"], "bearer")
+        self.assertTrue(response.json()["access_token"])
+
+        response = self.client.post(
+            "/api/v1/users/change-password",
+            json=change_password_payload,
+            headers={"Authorization": "Bearer " + response.json()["access_token"]},
+        )
+        self.assertEqual(response.status_code, 204)
+
+        response = self.client.post("/api/v1/users/login", data=login_payload)
+        self.assertEqual(response.status_code, 401)
+
+        login_payload["password"] = new_password
+        response = self.client.post("/api/v1/users/login", data=login_payload)
+        self.assertEqual(response.status_code, 200)

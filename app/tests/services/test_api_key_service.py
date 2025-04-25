@@ -3,7 +3,7 @@ import uuid
 import faker
 
 from app.datasources.db.connector import db_session_context
-from app.routers.auth import get_user_from_jwt_token
+from app.routers.auth import get_jwt_info_from_user_token
 
 from ...datasources.db.models import ApiKey
 from ...models.api_key import ApiKeyPublic
@@ -32,7 +32,7 @@ class TestApiKeyService(AsyncDbTestCase):
         self.assertEqual(api_key.description, stored_api_key.description)
 
         # The subjects is generated correctly
-        decoded_token = await get_user_from_jwt_token(api_key.token)
+        decoded_token = await get_jwt_info_from_user_token(api_key.token)
         self.assertEqual(f"{str(user.id)}_{str(api_key.id)}", decoded_token["sub"])
 
     @db_session_context

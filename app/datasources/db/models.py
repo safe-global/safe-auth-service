@@ -68,6 +68,13 @@ class User(SqlQueryBase, SQLModel, table=True):
         return None
 
     @classmethod
+    async def get_by_user_id(cls, user_id: uuid.UUID) -> Self | None:
+        result = await db_session.execute(select(cls).where(cls.id == user_id))
+        if user := result.first():
+            return user[0]
+        return None
+
+    @classmethod
     async def update_password(cls, user_id: uuid.UUID, new_password: str) -> bool:
         """
         Update the password for a user.
@@ -79,7 +86,11 @@ class User(SqlQueryBase, SQLModel, table=True):
         Returns: True if the password was updated, False otherwise.
 
         """
-        query = update(cls).where(col(cls.id == user_id)).values(password=new_password)
+        query = (
+            update(cls)
+            .where(col(cls.id) == user_id)
+            .values(hashed_password=new_password)
+        )
         result = await db_session.execute(query)
         await db_session.commit()
         return True if result.rowcount == 1 else False
