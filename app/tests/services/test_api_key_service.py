@@ -23,12 +23,13 @@ class TestApiKeyService(AsyncDbTestCase):
     @db_session_context
     async def test_generate_api_key(self):
         user, _ = await generate_random_user()
-        api_key = await generate_api_key(user.id)
+        api_key = await generate_api_key(user.id, description="Api key for testing")
         self.assertIsNotNone(api_key)
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertEqual(api_key.id, stored_api_key.id)
         self.assertEqual(api_key.created, stored_api_key.created)
         self.assertEqual(api_key.token, stored_api_key.token)
+        self.assertEqual(api_key.description, stored_api_key.description)
 
         # The subjects is generated correctly
         decoded_token = await get_user_from_jwt_token(api_key.token)
@@ -40,7 +41,7 @@ class TestApiKeyService(AsyncDbTestCase):
         result = await delete_api_key_by_id(uuid.uuid4(), user.id)
         self.assertFalse(result)
 
-        api_key = await generate_api_key(user.id)
+        api_key = await generate_api_key(user.id, description="Api key for testing")
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertIsNotNone(stored_api_key)
 
@@ -66,6 +67,7 @@ class TestApiKeyService(AsyncDbTestCase):
         self.assertEqual(api_key_db.created, api_key_public.created)
         self.assertEqual(api_key_db.token, api_key_public.token)
         self.assertFalse(hasattr(api_key_public, "user_id"))
+        self.assertEqual(api_key_db.description, api_key_public.description)
 
     @db_session_context
     async def test_get_api_keys_by_user(self):
@@ -86,3 +88,4 @@ class TestApiKeyService(AsyncDbTestCase):
             self.assertEqual(result.created, api_key.created)
             self.assertEqual(result.token, api_key.token)
             self.assertFalse(hasattr(result, "user_id"))
+            self.assertEqual(result.description, api_key.description)

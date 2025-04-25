@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from starlette import status
 
+from ..models.api_key import ApiKeyInfo
 from ..services.api_key_service import (
     delete_api_key_by_id,
     generate_api_key,
@@ -24,16 +25,20 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_api_key(
+    api_key_info: ApiKeyInfo,
     current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
 ):
     """
     Create a new api key for the authenticated user.
 
+    Args:
+        api_key_info: API key creation body
+
     Returns: the new api key.
 
     """
     user_id = current_user["sub"]
-    return await generate_api_key(user_id)
+    return await generate_api_key(user_id, description=api_key_info.description)
 
 
 @router.get("/{api_key_id}")

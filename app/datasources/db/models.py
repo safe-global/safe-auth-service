@@ -72,6 +72,7 @@ class ApiKey(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
     id: uuid.UUID = Field(primary_key=True)
     user_id: uuid.UUID = Field(nullable=False, foreign_key="user.id")
     token: str = Field(nullable=False, unique=True)
+    description: str = Field(nullable=False, max_length=200)
 
     @classmethod
     async def get_by_ids(cls, api_key_id: uuid.UUID, user_id: uuid.UUID):

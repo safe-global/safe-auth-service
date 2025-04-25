@@ -9,13 +9,14 @@ from app.models.api_key import ApiKeyPublic
 from app.services.jwt_service import JwtService
 
 
-async def generate_api_key(user_id: uuid.UUID) -> ApiKeyPublic:
+async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic:
     """
     Generate and store in database a new api key for a given user.
     Each api_key for user will contain a unique subject with user id and api key id concatenated.
 
     Args:
         user_id: unique user identifier.
+        description: description of the api key.
 
     Returns: serialized ApiKeyPublic object.
 
@@ -26,7 +27,9 @@ async def generate_api_key(user_id: uuid.UUID) -> ApiKeyPublic:
     access_token = JwtService.create_access_token(
         subject, access_token_expires, settings.JWT_AUDIENCE, {}
     )
-    api_key = ApiKey(id=api_key_id, user_id=user_id, token=access_token)
+    api_key = ApiKey(
+        id=api_key_id, user_id=user_id, token=access_token, description=description
+    )
     await api_key.create()
     return ApiKeyPublic.model_validate(api_key)
 

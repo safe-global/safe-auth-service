@@ -1,8 +1,8 @@
 """initial_migration
 
-Revision ID: e66249df1028
+Revision ID: e7aa50584db4
 Revises:
-Create Date: 2025-04-11 13:49:36.496454
+Create Date: 2025-04-25 13:32:49.803493
 
 """
 
@@ -13,7 +13,7 @@ import sqlmodel
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "e66249df1028"
+revision: str = "e7aa50584db4"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -38,6 +38,9 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column("token", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column(
+            "description", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False
+        ),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
