@@ -176,6 +176,9 @@ class UserService:
 
         Returns: True if the password was changed or False otherwise.
 
+        Raises:
+            WrongPassword: in case the old password is incorrect
+
         """
         if not self.verify_password(old_password, user.hashed_password):
             raise WrongPassword("Incorrect password")
