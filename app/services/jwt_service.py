@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -40,7 +39,6 @@ class JwtService:
             "exp": expire,
             "data": data.copy(),
         }
-        logging.info(f"JWT PK: {settings.JWT_PRIVATE_KEY}")
         encoded_jwt = jwt.encode(
             to_encode, settings.JWT_PRIVATE_KEY, algorithm=settings.JWT_ALGORITHM
         )
