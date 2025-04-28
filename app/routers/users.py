@@ -19,7 +19,7 @@ from ..services.user_service import (
     UserAlreadyExists,
     UserService,
 )
-from .auth import get_jwt_info_from_user_token, get_user_id_from_jwt
+from .auth import get_jwt_info_from_user_token, get_user_from_jwt
 
 router = APIRouter(
     prefix="/users",
@@ -84,10 +84,10 @@ async def change_password(
     change_password_request: ChangePasswordRequest,
     current_user: Annotated[dict, Depends(get_jwt_info_from_user_token)],
 ):
-    user_id = get_user_id_from_jwt(current_user)
+    user = await get_user_from_jwt(current_user)
     user_service = UserService()
     await user_service.change_password(
-        user_id,
+        user,
         change_password_request.old_password,
         change_password_request.new_password,
     )

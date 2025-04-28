@@ -1,4 +1,3 @@
-import logging
 import uuid
 from datetime import timedelta
 from typing import cast
@@ -164,24 +163,20 @@ class UserService:
         return Token(access_token=access_token, token_type="bearer")
 
     async def change_password(
-        self, user_id: uuid.UUID, old_password: str, new_password: str
+        self, user: User, old_password: str, new_password: str
     ) -> bool:
         """
         Changes the password for an authenticated user.
         Checks if the old password is correct.
 
         Args:
-            user_id: User instance
+            user: User instance
             old_password: Old password
             new_password: Password to update
 
         Returns: True if the password was changed or False otherwise.
 
         """
-        user = await User.get_by_user_id(user_id)
-        if not user:
-            logging.critical(f"User {user_id} not found")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         if not self.verify_password(old_password, user.hashed_password):
             raise WrongPassword("Incorrect password")
 
