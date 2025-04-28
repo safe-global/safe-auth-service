@@ -1,14 +1,21 @@
 import datetime
-import unittest
+import uuid
 
 from fastapi import HTTPException
 
 from app.config import settings
-from app.routers.auth import get_jwt_info_from_user_token
+from app.datasources.db.connector import db_session_context
+from app.routers.auth import (
+    UserFromJWTDoesNotExist,
+    get_jwt_info_from_user_token,
+    get_user_from_jwt,
+)
 from app.services.jwt_service import JwtService
+from app.tests.datasources.db.async_db_test_case import AsyncDbTestCase
+from app.tests.datasources.db.factory import generate_random_user
 
 
-class TestAuth(unittest.IsolatedAsyncioTestCase):
+class TestAuth(AsyncDbTestCase):
 
     async def test_valid_token(self):
         token = JwtService().create_access_token(
@@ -37,3 +44,21 @@ class TestAuth(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(context.exception.status_code, 401)
         self.assertEqual(context.exception.detail, "The provided JWT token has expired")
+
+    @db_session_context
+    async def test_get_user_from_jwt(self):
+        user_id = uuid.uuid4()
+        token = JwtService().create_access_token(
+            str(user_id), datetime.timedelta(minutes=5), settings.JWT_AUDIENCE, {}
+        )
+        jwt_info = await get_jwt_info_from_user_token(token)
+        with self.assertRaises(UserFromJWTDoesNotExist) as context:
+            await get_user_from_jwt(jwt_info)
+
+        user, password = await generate_random_user()
+        token = JwtService().create_access_token(
+            str(user.id), datetime.timedelta(minutes=5), settings.JWT_AUDIENCE, {}
+        )
+        jwt_info = await get_jwt_info_from_user_token(token)
+        self.assertEqual(jwt_info["sub"], str(user.id))
+        self.assertEqual(user, await get_user_from_jwt(jwt_info))

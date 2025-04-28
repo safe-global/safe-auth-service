@@ -3,7 +3,7 @@ import uuid
 import faker
 
 from app.datasources.db.connector import db_session_context
-from app.datasources.db.models import ApiKey
+from app.datasources.db.models import ApiKey, User
 
 from .async_db_test_case import AsyncDbTestCase
 from .factory import generate_random_api_key, generate_random_user
@@ -18,6 +18,23 @@ class TestModel(AsyncDbTestCase):
         await user.create()
         result = await user.get_all()
         self.assertEqual(result[0], user)
+
+    @db_session_context
+    async def test_update_password(self):
+        old_password = fake.password()
+        user = await User(email=fake.email(), hashed_password=old_password).create()
+        self.assertEqual(user.hashed_password, old_password)
+        new_password = fake.password()
+
+        updated = await User.update_password(uuid.uuid4(), new_password)
+        self.assertFalse(updated)
+        user = await User.get_by_user_id(user.id)
+        self.assertEqual(user.hashed_password, old_password)
+
+        updated = await User.update_password(user.id, new_password)
+        self.assertTrue(updated)
+        user = await User.get_by_user_id(user.id)
+        self.assertEqual(user.hashed_password, new_password)
 
     @db_session_context
     async def test_api_key(self):
