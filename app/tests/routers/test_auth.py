@@ -7,7 +7,7 @@ from app.config import settings
 from app.datasources.db.connector import db_session_context
 from app.routers.auth import (
     UserFromJWTDoesNotExist,
-    get_jwt_info_from_user_token,
+    get_jwt_info_from_auth_token,
     get_user_from_jwt,
 )
 from app.services.jwt_service import JwtService
@@ -22,14 +22,14 @@ class TestAuth(AsyncDbTestCase):
             "user123", datetime.timedelta(minutes=5), settings.JWT_AUDIENCE, {}
         )
 
-        user = await get_jwt_info_from_user_token(token)
+        user = await get_jwt_info_from_auth_token(token)
         self.assertEqual(user["sub"], "user123")
 
     async def test_invalid_token(self):
         invalid_token = "invalid.token.value"
 
         with self.assertRaises(HTTPException) as context:
-            await get_jwt_info_from_user_token(invalid_token)
+            await get_jwt_info_from_auth_token(invalid_token)
 
         self.assertEqual(context.exception.status_code, 401)
         self.assertEqual(context.exception.detail, "Could not decode credentials")
@@ -40,7 +40,7 @@ class TestAuth(AsyncDbTestCase):
         )
 
         with self.assertRaises(HTTPException) as context:
-            await get_jwt_info_from_user_token(token)
+            await get_jwt_info_from_auth_token(token)
 
         self.assertEqual(context.exception.status_code, 401)
         self.assertEqual(context.exception.detail, "The provided JWT token has expired")
@@ -51,7 +51,7 @@ class TestAuth(AsyncDbTestCase):
         token = JwtService().create_access_token(
             str(user_id), datetime.timedelta(minutes=5), settings.JWT_AUDIENCE, {}
         )
-        jwt_info = await get_jwt_info_from_user_token(token)
+        jwt_info = await get_jwt_info_from_auth_token(token)
         with self.assertRaises(UserFromJWTDoesNotExist) as context:
             await get_user_from_jwt(jwt_info)
 
@@ -59,6 +59,6 @@ class TestAuth(AsyncDbTestCase):
         token = JwtService().create_access_token(
             str(user.id), datetime.timedelta(minutes=5), settings.JWT_AUDIENCE, {}
         )
-        jwt_info = await get_jwt_info_from_user_token(token)
+        jwt_info = await get_jwt_info_from_auth_token(token)
         self.assertEqual(jwt_info["sub"], str(user.id))
         self.assertEqual(user, await get_user_from_jwt(jwt_info))

@@ -19,7 +19,7 @@ class UserFromJWTDoesNotExist(Exception):
     pass
 
 
-async def get_jwt_info_from_user_token(
+async def get_jwt_info_from_auth_token(
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> dict[str, Any]:
     try:
