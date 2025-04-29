@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from ..services.user_service import WrongPassword
+from ..services.user_service import TemporaryTokenExists, WrongPassword
 from .auth import UserFromJWTDoesNotExist
 
 
@@ -23,4 +23,13 @@ def register_exception_handlers(app: FastAPI):
         return JSONResponse(
             status_code=500,
             content={"message": "User does not exist"},
+        )
+
+    @app.exception_handler(TemporaryTokenExists)
+    async def temporary_token_exists_exception_handler(
+        request: Request, exc: UserFromJWTDoesNotExist
+    ):
+        return JSONResponse(
+            status_code=409,
+            content={"message": "Temporary token exists"},
         )

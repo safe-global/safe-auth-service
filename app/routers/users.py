@@ -99,7 +99,7 @@ async def change_password(
     )
 
 
-@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+@router.post("/forgot-password", status_code=status.HTTP_204_NO_CONTENT)
 async def forgot_password(forgot_password_request: ForgotPasswordRequest):
 
     user_service = UserService()

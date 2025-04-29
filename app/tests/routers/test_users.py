@@ -160,7 +160,6 @@ class TestUsers(AsyncDbTestCase):
         self.assertTrue(response.json()["access_token"])
         access_token = response.json()["access_token"]
 
-        # Test wrong old password
         response = self.client.post(
             "/api/v1/users/change-password",
             json=change_password_payload,
@@ -182,3 +181,34 @@ class TestUsers(AsyncDbTestCase):
         login_payload["password"] = new_password
         response = self.client.post("/api/v1/users/login", data=login_payload)
         self.assertEqual(response.status_code, 200)
+
+    @db_session_context
+    @mock.patch("app.services.user_service.send_reset_password_temporary_token_email")
+    async def test_forgot_password(
+        self, mock_send_reset_password_temporary_token_email: mock.MagicMock
+    ):
+        forgot_password_payload = {
+            "email": fake.email(),
+        }
+        # Should not inform that email that not exist
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 204)
+        mock_send_reset_password_temporary_token_email.assert_not_called()
+
+        user = self.get_example_registration_user()
+        await self.test_register()
+        forgot_password_payload["email"] = user.email
+
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 204)
+        mock_send_reset_password_temporary_token_email.assert_called_once()
+
+        mock_send_reset_password_temporary_token_email.reset_mock()
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 409)

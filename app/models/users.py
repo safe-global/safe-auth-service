@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class Token(BaseModel):
@@ -24,8 +24,8 @@ class RegistrationUserResponse(PreRegistrationUser):
 
 
 class ChangePasswordRequest(BaseModel):
-    old_password: str
-    new_password: str
+    old_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=1)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -35,4 +35,4 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
     token: str
-    new_password: str
+    new_password: str = Field(min_length=1)
