@@ -59,6 +59,9 @@ class Settings(BaseSettings):
     PROMETHEUS_BASE_URL: str = ""
     PROMETHEUS_CONNECTIONS_POOL_SIZE: int = 100
 
+    # URLS
+    FORGOT_PASSWORD_URL: str = "https://example.com/forgot_password"
+
 
 settings = Settings()
 

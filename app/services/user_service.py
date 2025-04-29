@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import timedelta
 from typing import cast
@@ -10,6 +11,7 @@ from starlette import status
 from ..config import settings
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
+from ..datasources.email.email_client import send_reset_password_temporary_token_email
 from ..models.users import Token
 from .jwt_service import JwtService
 
@@ -38,8 +40,13 @@ class WrongPassword(UserServiceException):
     pass
 
 
+class UserDoesNotExist(UserServiceException):
+    pass
+
+
 class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
+    TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX = "temporary-token:reset-password:"
 
     def __init__(self):
         self.jwt_service = JwtService()
@@ -160,11 +167,11 @@ class UserService:
         return Token(access_token=access_token, token_type="bearer")
 
     async def change_password(
-        self, user: User, old_password: str, new_password: str
+        self, user: User, old_password: str | None, new_password: str
     ) -> bool:
         """
         Changes the password for an authenticated user.
-        Checks if the old password is correct.
+        If old_password is provided, the password will be checked against the old_password.
 
         Args:
             user: User instance
@@ -177,8 +184,41 @@ class UserService:
             WrongPassword: in case the old password is incorrect
 
         """
-        if not self.verify_password(old_password, user.hashed_password):
+        if old_password and not self.verify_password(
+            old_password, user.hashed_password
+        ):
             raise WrongPassword("Incorrect password")
 
         hashed_password = self.hash_password(new_password)
         return await User.update_password(user.id, hashed_password)
+
+    async def forgot_password(self, email: str):
+        if self.temporary_token_exists(
+            self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email
+        ):
+            raise TemporaryTokenExists(f"Temporary token exists for {email}")
+        # Check if the user exists
+        if not await User.get_by_email(email):
+            return None
+        token = self.temporary_token_generate(
+            self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email
+        )
+        send_reset_password_temporary_token_email(email, token)
+
+    async def reset_password(self, email: str, token: str, new_password: str) -> bool:
+        if not self.temporary_token_is_valid(
+            self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email, token
+        ):
+            raise TemporaryTokenNotValid(f"Temporary token not valid for {email}")
+
+        # Changes the password without check the previous value
+        user = await User.get_by_email(email)
+        if not user:
+            logging.critical(
+                f"User for reset password token ({token}) that does not exist in the database."
+            )
+            raise UserDoesNotExist(
+                f"User for reset password token ({token}) that does not exist in the database."
+            )
+
+        return await self.change_password(user, None, new_password)

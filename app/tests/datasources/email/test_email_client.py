@@ -4,7 +4,7 @@ from unittest import IsolatedAsyncioTestCase
 import aiohttp
 
 from app.config import settings
-from app.datasources.email.email_client import send_email, send_temporary_token_email
+from app.datasources.email.email_client import send_email, send_register_temporary_token_email
 
 
 class TestEmailClient(IsolatedAsyncioTestCase):
@@ -49,9 +49,9 @@ class TestEmailClient(IsolatedAsyncioTestCase):
         self.assertTrue(sent_successfully)
         self.assertEqual(await self._get_number_messages(), 1)
 
-    async def test_send_temporary_token_email(self):
+    async def test_send_register_temporary_token_email(self):
         self.assertEqual(await self._get_number_messages(), 0)
-        sent_successfully = send_temporary_token_email(
+        sent_successfully = send_register_temporary_token_email(
             "random-address@safe.global", uuid.uuid4().hex
         )
         self.assertTrue(sent_successfully)

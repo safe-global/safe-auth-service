@@ -41,11 +41,11 @@ class TestUsers(AsyncDbTestCase):
         payload = {"email": user.email}
 
         with mock.patch(
-            "app.routers.users.send_temporary_token_email"
-        ) as send_temporary_token_email_mock:
+            "app.routers.users.send_register_temporary_token_email"
+        ) as send_register_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
-            send_temporary_token_email_mock.assert_called_once()
+            send_register_temporary_token_email_mock.assert_called_once()
 
         # Token will not be sent again until TTL expires
         response = self.client.post("/api/v1/users/pre-registrations", json=payload)
@@ -74,12 +74,14 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(count, 0)
 
         with mock.patch(
-            "app.routers.users.send_temporary_token_email"
-        ) as send_temporary_token_email_mock:
+            "app.routers.users.send_register_temporary_token_email"
+        ) as send_register_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
-            send_temporary_token_email_mock.assert_called_once()
-            payload["token"] = send_temporary_token_email_mock.mock_calls[0].args[1]
+            send_register_temporary_token_email_mock.assert_called_once()
+            payload["token"] = send_register_temporary_token_email_mock.mock_calls[
+                0
+            ].args[1]
             response = self.client.post("/api/v1/users/registrations", json=payload)
             self.assertEqual(response.status_code, 201)
 

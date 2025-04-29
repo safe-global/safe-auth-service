@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from starlette import status
 
-from ..datasources.email.email_client import send_temporary_token_email
+from ..datasources.email.email_client import send_register_temporary_token_email
 from ..models.users import (
     ChangePasswordRequest,
     PreRegistrationResponse,
@@ -38,7 +38,7 @@ async def pre_register(
     user_service = UserService()
     try:
         token = user_service.pre_register_user(user_request.email)
-        background_tasks.add_task(send_temporary_token_email, user_request.email, token)
+        background_tasks.add_task(send_register_temporary_token_email, user_request.email, token)
         return PreRegistrationResponse(token=token)
     except TemporaryTokenExists as e:
         raise HTTPException(
