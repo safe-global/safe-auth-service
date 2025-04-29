@@ -14,6 +14,7 @@ def send_email(to: str, content: str, subject: str) -> bool:
     Args:
         to: Email address to send the email to
         content: Content of the email
+        subject: Subject of the email
 
     Returns:
         `True` if the email was sent, `False` otherwise
