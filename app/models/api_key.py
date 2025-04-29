@@ -1,7 +1,11 @@
 import datetime
 import uuid
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class ApiKeyInfo(BaseModel):
+    description: str = Field(max_length=200)
 
 
 class ApiKeyPublic(BaseModel):
@@ -10,3 +14,4 @@ class ApiKeyPublic(BaseModel):
     id: uuid.UUID
     created: datetime.datetime
     token: str
+    description: str
