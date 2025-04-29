@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from app.routers.auth import UserFromJWTDoesNotExist
-from app.services.user_service import WrongPassword
+from ..services.user_service import WrongPassword
+from .auth import UserFromJWTDoesNotExist
 
 
 def register_exception_handlers(app: FastAPI):
