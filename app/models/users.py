@@ -21,3 +21,8 @@ class RegistrationUser(PreRegistrationUser):
 
 class RegistrationUserResponse(PreRegistrationUser):
     uuid: str
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str

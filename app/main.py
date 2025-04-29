@@ -14,6 +14,7 @@ from .datasources.db.connector import (
 )
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
 from .routers import about, api_keys, default, users
+from .routers.execeptions_handler import register_exception_handlers
 
 logger = logging.getLogger()
 
@@ -50,6 +51,8 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+
+register_exception_handlers(app)
 
 # Router configuration
 api_v1_router = APIRouter(

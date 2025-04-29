@@ -12,7 +12,7 @@ from ..services.api_key_service import (
     get_api_key_by_ids,
     get_api_keys_by_user,
 )
-from .auth import get_user_from_jwt_token
+from .auth import get_jwt_info_from_auth_token, get_user_id_from_jwt
 
 router = APIRouter(
     prefix="/api-keys",
@@ -26,7 +26,7 @@ router = APIRouter(
 )
 async def create_api_key(
     api_key_info: ApiKeyInfo,
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+    jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
 ):
     """
     Create a new api key for the authenticated user.
@@ -37,14 +37,14 @@ async def create_api_key(
     Returns: the new api key.
 
     """
-    user_id = current_user["sub"]
+    user_id = get_user_id_from_jwt(jwt_info)
     return await generate_api_key(user_id, description=api_key_info.description)
 
 
 @router.get("/{api_key_id}")
 async def get_api_key(
     api_key_id: uuid.UUID,
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+    jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
 ):
     """
     Get an existing api key for the authenticated user.
@@ -55,21 +55,23 @@ async def get_api_key(
     Returns: the existing api key.
 
     """
-    user_id = current_user["sub"]
+    user_id = get_user_id_from_jwt(jwt_info)
     if (api_key := await get_api_key_by_ids(api_key_id, user_id)) is None:
         raise HTTPException(status_code=404)
     return api_key
 
 
 @router.get("/")
-async def get_api_keys(current_user: Annotated[dict, Depends(get_user_from_jwt_token)]):
+async def get_api_keys(
+    jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
+):
     """
     Get all existing api keys for the authenticated user.
 
     Returns: list with the existing api keys.
 
     """
-    user_id = current_user["sub"]
+    user_id = get_user_id_from_jwt(jwt_info)
     return await get_api_keys_by_user(user_id)
 
 
@@ -79,7 +81,7 @@ async def get_api_keys(current_user: Annotated[dict, Depends(get_user_from_jwt_t
 )
 async def delete_api_key(
     api_key_id: uuid.UUID,
-    current_user: Annotated[dict, Depends(get_user_from_jwt_token)],
+    jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
 ):
     """
     Delete an existing api key for the authenticated user.
@@ -88,7 +90,7 @@ async def delete_api_key(
         api_key_id:
 
     """
-    user_id = current_user["sub"]
+    user_id = get_user_id_from_jwt(jwt_info)
 
     if await delete_api_key_by_id(api_key_id, user_id) is False:
         raise HTTPException(status_code=404)

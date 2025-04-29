@@ -35,6 +35,10 @@ class TemporaryTokenExists(UserServiceException):
     pass
 
 
+class WrongPassword(UserServiceException):
+    pass
+
+
 class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
 
@@ -157,3 +161,27 @@ class UserService:
             user.id.hex, access_token_expires, settings.JWT_AUDIENCE, {}
         )
         return Token(access_token=access_token, token_type="bearer")
+
+    async def change_password(
+        self, user: User, old_password: str, new_password: str
+    ) -> bool:
+        """
+        Changes the password for an authenticated user.
+        Checks if the old password is correct.
+
+        Args:
+            user: User instance
+            old_password: Old password
+            new_password: Password to update
+
+        Returns: True if the password was changed or False otherwise.
+
+        Raises:
+            WrongPassword: in case the old password is incorrect
+
+        """
+        if not self.verify_password(old_password, user.hashed_password):
+            raise WrongPassword("Incorrect password")
+
+        hashed_password = self.hash_password(new_password)
+        return await User.update_password(user.id, hashed_password)
