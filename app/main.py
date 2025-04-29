@@ -6,6 +6,8 @@ from fastapi import APIRouter, FastAPI
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.routers.execeptions_handler import register_exception_handlers
+
 from . import VERSION
 from .datasources.db.connector import (
     _get_database_session_context,
@@ -14,7 +16,6 @@ from .datasources.db.connector import (
 )
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
 from .routers import about, api_keys, default, users
-from .tests.routers.execeptions_handler import register_exception_handlers
 
 logger = logging.getLogger()
 
