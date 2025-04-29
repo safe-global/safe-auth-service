@@ -26,3 +26,13 @@ class RegistrationUserResponse(PreRegistrationUser):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    token: str
+    new_password: str

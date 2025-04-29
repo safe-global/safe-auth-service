@@ -8,10 +8,12 @@ from starlette import status
 from ..datasources.email.email_client import send_register_temporary_token_email
 from ..models.users import (
     ChangePasswordRequest,
+    ForgotPasswordRequest,
     PreRegistrationResponse,
     PreRegistrationUser,
     RegistrationUser,
     RegistrationUserResponse,
+    ResetPasswordRequest,
     Token,
 )
 from ..services.user_service import (
@@ -94,4 +96,21 @@ async def change_password(
         user,
         change_password_request.old_password,
         change_password_request.new_password,
+    )
+
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(forgot_password_request: ForgotPasswordRequest):
+
+    user_service = UserService()
+    await user_service.forgot_password(forgot_password_request.email)
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_password(reset_password_request: ResetPasswordRequest):
+    user_service = UserService()
+    await user_service.reset_password(
+        reset_password_request.email,
+        reset_password_request.token,
+        reset_password_request.new_password,
     )
