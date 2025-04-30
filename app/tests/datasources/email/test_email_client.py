@@ -4,7 +4,10 @@ from unittest import IsolatedAsyncioTestCase
 import aiohttp
 
 from app.config import settings
-from app.datasources.email.email_client import send_email, send_register_temporary_token_email
+from app.datasources.email.email_client import (
+    send_email,
+    send_register_temporary_token_email,
+)
 
 
 class TestEmailClient(IsolatedAsyncioTestCase):

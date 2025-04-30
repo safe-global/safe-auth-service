@@ -44,10 +44,11 @@ def send_register_temporary_token_email(to: str, token: str) -> bool:
         "Register token for Safe Auth Service",
     )
 
+
 def send_reset_password_temporary_token_email(to: str, token: str) -> bool:
     return send_email(
         to,
-f"""
+        f"""
             Please follow the following link to reset the password:
             {settings.FORGOT_PASSWORD_URL}?token={token}
        """,
