@@ -1,5 +1,4 @@
 import uuid
-from unittest import mock
 
 import faker
 
@@ -47,24 +46,22 @@ class TestApiKeyService(AsyncDbTestCase):
 
     @db_session_context
     async def test_forgot_password(self):
-        user, _ = await generate_random_user()
         user_service = UserService()
-        with mock.patch("app.services.user_service.send_reset_password_temporary_token_email") as send_reset_password_temporary_token_email:
-            await user_service.forgot_password(user.email)
-            send_reset_password_temporary_token_email.assert_called_once()
+        self.assertIsNone(await user_service.get_forgot_password_token(fake.email()))
+
+        user, _ = await generate_random_user()
+        self.assertIsNotNone(await user_service.get_forgot_password_token(user.email))
 
         with self.assertRaises(TemporaryTokenExists):
-            await user_service.forgot_password(user.email)
+            await user_service.get_forgot_password_token(user.email)
 
     @db_session_context
-    @mock.patch("app.services.user_service.send_reset_password_temporary_token_email")
-    async def test_reset_password(self, mock_send_reset_password_temporary_token_email):
+    async def test_reset_password(self):
         user, old_password = await generate_random_user()
         user_service = UserService()
-        await user_service.forgot_password(user.email)
-        mock_send_reset_password_temporary_token_email.assert_called_once()
-        email, right_token = mock_send_reset_password_temporary_token_email.call_args[0]
-        self.assertEqual(user.email, email)
+        right_token = await user_service.get_forgot_password_token(user.email)
+        assert right_token is not None
+        self.assertEqual(user.email, user.email)
         wrong_token = str(uuid.uuid4())
         new_password = fake.password()
 

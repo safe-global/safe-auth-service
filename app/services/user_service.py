@@ -11,7 +11,6 @@ from starlette import status
 from ..config import settings
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
-from ..datasources.email.email_client import send_reset_password_temporary_token_email
 from ..models.users import Token
 from .jwt_service import JwtService
 
@@ -192,7 +191,16 @@ class UserService:
         hashed_password = self.hash_password(new_password)
         return await User.update_password(user.id, hashed_password)
 
-    async def forgot_password(self, email: str):
+    async def get_forgot_password_token(self, email: str) -> str | None:
+        """
+        Return the temporary token for a provided email.
+
+        Args:
+            email:
+
+        Returns: a token if the email exists, None otherwise
+
+        """
         if self.temporary_token_exists(
             self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email
         ):
@@ -200,10 +208,11 @@ class UserService:
         # Check if the user exists
         if not await User.get_by_email(email):
             return None
+
         token = self.temporary_token_generate(
             self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email
         )
-        send_reset_password_temporary_token_email(email, token)
+        return token
 
     async def reset_password(self, email: str, token: str, new_password: str) -> bool:
         if not self.temporary_token_is_valid(
