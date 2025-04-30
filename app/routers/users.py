@@ -9,6 +9,7 @@ from ..datasources.email.email_client import (
     send_register_temporary_token_email,
     send_reset_password_temporary_token_email,
 )
+from ..models.types import passwordType
 from ..models.users import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -78,7 +79,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
     user_service = UserService()
     token = await user_service.login_user(
         form_data.username,
-        form_data.password,
+        passwordType(form_data.password),
     )
     return token
 

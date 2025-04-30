@@ -11,6 +11,7 @@ from starlette import status
 from ..config import settings
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
+from ..models.types import passwordType
 from ..models.users import Token
 from .jwt_service import JwtService
 
@@ -50,10 +51,14 @@ class UserService:
     def __init__(self):
         self.jwt_service = JwtService()
 
-    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
+    def verify_password(
+        self, plain_password: passwordType, hashed_password: str
+    ) -> bool:
+        return bcrypt.checkpw(
+            plain_password.get_secret_value().encode(), hashed_password.encode()
+        )
 
-    def hash_password(self, password: str) -> str:
+    def hash_password(self, password: passwordType) -> str:
         """
         Args:
             password:
@@ -61,7 +66,9 @@ class UserService:
         Returns:
             A string like '$2b$12$yadYxE5ZNfF28M.M00gha.SEaPF2Z.ICEqgIhbhZrgCrCR7PEK7uS'
         """
-        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        return bcrypt.hashpw(
+            password.get_secret_value().encode(), bcrypt.gensalt()
+        ).decode()
 
     def temporary_token_generate(
         self,
@@ -118,7 +125,9 @@ class UserService:
         )
         return token
 
-    async def register_user(self, email: str, password: str, token: str) -> str:
+    async def register_user(
+        self, email: str, password: passwordType, token: str
+    ) -> str:
         """
         Args:
             email:
@@ -145,13 +154,15 @@ class UserService:
         await user.create()
         return user_uuid
 
-    async def authenticate_user(self, email: str, password: str) -> User | None:
+    async def authenticate_user(
+        self, email: str, password: passwordType
+    ) -> User | None:
         user = await User.get_by_email(email)
         if user and self.verify_password(password, user.hashed_password):
             return user
         return None
 
-    async def login_user(self, email: str, password: str) -> Token:
+    async def login_user(self, email: str, password: passwordType) -> Token:
         user = await self.authenticate_user(email, password)
         if not user:
             raise HTTPException(
@@ -166,7 +177,7 @@ class UserService:
         return Token(access_token=access_token, token_type="bearer")
 
     async def change_password(
-        self, user: User, old_password: str | None, new_password: str
+        self, user: User, old_password: passwordType | None, new_password: passwordType
     ) -> bool:
         """
         Changes the password to the provided user.
@@ -214,7 +225,9 @@ class UserService:
         )
         return token
 
-    async def reset_password(self, email: str, token: str, new_password: str) -> bool:
+    async def reset_password(
+        self, email: str, token: str, new_password: passwordType
+    ) -> bool:
         """
         Changes a password for a user with the provided password.
         Checks that the email was verified from the provided token.
