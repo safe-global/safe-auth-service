@@ -215,7 +215,7 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(response.status_code, 409)
 
     @db_session_context
-    @mock.patch.object(EmailClient, "send_reset_password_temporary_token_email")
+    @mock.patch("app.services.user_service.send_reset_password_temporary_token_email")
     async def test_reset_password(
         self, mock_send_reset_password_temporary_token_email: mock.MagicMock
     ):
