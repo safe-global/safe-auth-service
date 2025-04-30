@@ -169,7 +169,7 @@ class UserService:
         self, user: User, old_password: str | None, new_password: str
     ) -> bool:
         """
-        Changes the password for an authenticated user.
+        Changes the password to the provided user.
         If old_password is provided, the password will be checked against the old_password.
 
         Args:
@@ -215,6 +215,18 @@ class UserService:
         return token
 
     async def reset_password(self, email: str, token: str, new_password: str) -> bool:
+        """
+        Changes a password for a user with the provided password.
+        Checks that the email was verified from the provided token.
+
+        Args:
+            email:
+            token:
+            new_password:
+
+        Returns:
+
+        """
         if not self.temporary_token_is_valid(
             self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email, token
         ):

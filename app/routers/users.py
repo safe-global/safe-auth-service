@@ -108,7 +108,6 @@ async def change_password(
 async def forgot_password(
     forgot_password_request: ForgotPasswordRequest, background_tasks: BackgroundTasks
 ):
-
     user_service = UserService()
     token = await user_service.get_forgot_password_token(forgot_password_request.email)
     if token:
