@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     JWT_PRIVATE_KEY: str = ""
     JWT_PUBLIC_KEY: str = ""
 
+    # Google Auth
+    GOOGLE_AUTHORIZATION_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/google/callback"
+    GOOGLE_TOKEN_URL: str = "https://accounts.google.com/o/oauth2/token"
+
     # Apisix ---------------
     APISIX_BASE_URL: str = ""
     APISIX_API_KEY: str = ""

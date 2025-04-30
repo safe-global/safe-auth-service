@@ -3,7 +3,6 @@ from functools import cache
 from typing import Any, Callable
 
 import aiohttp
-from aiohttp import ClientTimeout
 from safe_eth.util.http import build_full_url
 
 from ....config import settings
@@ -85,7 +84,7 @@ class ApisixClient(ApiGatewayClient):
                 full_url,
                 json=payload if payload else None,
                 headers=headers,
-                timeout=ClientTimeout(total=self.request_timeout),
+                timeout=aiohttp.ClientTimeout(total=self.request_timeout),
             )
 
         except (ValueError, IOError) as e:
