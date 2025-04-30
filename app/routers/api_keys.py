@@ -21,7 +21,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
 )
 async def create_api_key(
@@ -61,7 +61,7 @@ async def get_api_key(
     return api_key
 
 
-@router.get("/")
+@router.get("")
 async def get_api_keys(
     jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
 ):
