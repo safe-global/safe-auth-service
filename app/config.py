@@ -28,9 +28,9 @@ class Settings(BaseSettings):
     # Email -----------------
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_SERVER: str = ""  # email-smtp.eu-central-1.amazonaws.com
-    SMTP_PORT: int = 25  # 587 TTLS
-    SMTP_STARTTLS: bool = False  # True for AWS SES
+    SMTP_SERVER: str = ""
+    SMTP_PORT: int = 25
+    SMTP_STARTTLS: bool = False
     SMTP_FROM_ADDRESS: str = "safe-auth-service-no-reply@safe.global"
     SMTP_TEST_API_URL: str = ""  # API url for testing smtp4dev
 
