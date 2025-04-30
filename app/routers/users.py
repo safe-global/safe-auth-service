@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from starlette import status
 
+from ..datasources.email.email_client import send_temporary_token_email
 from ..models.users import (
     ChangePasswordRequest,
     PreRegistrationResponse,
@@ -31,10 +32,13 @@ router = APIRouter(
     "/pre-registrations",
     response_model=PreRegistrationResponse,
 )
-async def pre_register(user_request: PreRegistrationUser) -> PreRegistrationResponse:
+async def pre_register(
+    user_request: PreRegistrationUser, background_tasks: BackgroundTasks
+) -> PreRegistrationResponse:
     user_service = UserService()
     try:
         token = user_service.pre_register_user(user_request.email)
+        background_tasks.add_task(send_temporary_token_email, user_request.email, token)
         return PreRegistrationResponse(token=token)
     except TemporaryTokenExists as e:
         raise HTTPException(

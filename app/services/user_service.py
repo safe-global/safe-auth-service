@@ -10,7 +10,6 @@ from starlette import status
 from ..config import settings
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
-from ..datasources.email.email_client import EmailClient
 from ..models.users import Token
 from .jwt_service import JwtService
 
@@ -43,7 +42,6 @@ class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
 
     def __init__(self):
-        self.email_client = EmailClient()
         self.jwt_service = JwtService()
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
@@ -112,7 +110,6 @@ class UserService:
         token = self.temporary_token_generate(
             self.TEMPORARY_TOKEN_REGISTRATION_PREFIX, email
         )
-        self.email_client.send_temporary_token_email(email, token)
         return token
 
     async def register_user(self, email: str, password: str, token: str) -> str:
