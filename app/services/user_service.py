@@ -11,7 +11,8 @@ from starlette import status
 from ..config import settings
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
-from ..models.users import Token, passwordType
+from ..models.types import passwordType
+from ..models.users import Token
 from .jwt_service import JwtService
 
 

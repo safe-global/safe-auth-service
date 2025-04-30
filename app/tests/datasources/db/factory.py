@@ -4,7 +4,7 @@ from typing import Tuple
 import faker
 
 from app.datasources.db.models import ApiKey, User
-from app.models.users import passwordType
+from app.models.types import passwordType
 from app.services.user_service import UserService
 
 fake = faker.Faker()

@@ -9,6 +9,7 @@ from ..datasources.email.email_client import (
     send_register_temporary_token_email,
     send_reset_password_temporary_token_email,
 )
+from ..models.types import passwordType
 from ..models.users import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
@@ -18,7 +19,6 @@ from ..models.users import (
     RegistrationUserResponse,
     ResetPasswordRequest,
     Token,
-    passwordType,
 )
 from ..services.user_service import (
     TemporaryTokenExists,

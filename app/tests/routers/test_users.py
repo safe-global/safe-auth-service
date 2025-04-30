@@ -9,8 +9,9 @@ from app.datasources.cache.redis import get_redis
 from app.datasources.db.connector import db_session_context
 from app.datasources.db.models import User
 from app.main import app
-from app.models.users import RegistrationUser, passwordType
+from app.models.users import RegistrationUser
 
+from ...models.types import passwordType
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
 
 fake = faker.Faker()

@@ -4,7 +4,7 @@ import faker
 
 from ...datasources.db.connector import db_session_context
 from ...datasources.db.models import User
-from ...models.users import passwordType
+from ...models.types import passwordType
 from ...services.user_service import (
     TemporaryTokenExists,
     TemporaryTokenNotValid,
