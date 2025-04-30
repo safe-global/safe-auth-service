@@ -4,18 +4,19 @@ from typing import Tuple
 import faker
 
 from app.datasources.db.models import ApiKey, User
+from app.models.users import passwordType
 from app.services.user_service import UserService
 
 fake = faker.Faker()
 
 
-async def generate_random_user() -> Tuple[User, str]:
+async def generate_random_user() -> Tuple[User, passwordType]:
     """
     Generate a random user with mail and password.
     Returns: User object and plain password
 
     """
-    password = fake.password()
+    password = passwordType(fake.password(length=8))
     user_service = UserService()
     user = await User(
         email=fake.email(), hashed_password=user_service.hash_password(password)

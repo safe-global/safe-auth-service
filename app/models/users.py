@@ -1,8 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 from typing_extensions import Annotated
 
-passwordType = Annotated[str, Field(min_length=8)]
+passwordType = Annotated[SecretStr, Field(min_length=8)]
 
 
 class Token(BaseModel):

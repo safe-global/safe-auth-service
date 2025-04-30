@@ -9,7 +9,7 @@ from app.datasources.cache.redis import get_redis
 from app.datasources.db.connector import db_session_context
 from app.datasources.db.models import User
 from app.main import app
-from app.models.users import RegistrationUser
+from app.models.users import RegistrationUser, passwordType
 
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
 
@@ -33,7 +33,7 @@ class TestUsers(AsyncDbTestCase):
             The same example user so tests can be reused
         """
         token = "random-token"
-        password = "random-password"
+        password = passwordType("random-password")
         email = "testing@safe.global"
         return RegistrationUser(token=token, password=password, email=email)
 
@@ -60,7 +60,7 @@ class TestUsers(AsyncDbTestCase):
         user = self.get_example_registration_user()
         payload = {
             "token": user.token,
-            "password": user.password,
+            "password": user.password.get_secret_value(),
             "email": user.email,
         }
 
@@ -102,7 +102,7 @@ class TestUsers(AsyncDbTestCase):
 
         payload = {
             "username": user.email,
-            "password": user.password,
+            "password": user.password.get_secret_value(),
         }
 
         # User database is empty, it should not work
@@ -114,7 +114,7 @@ class TestUsers(AsyncDbTestCase):
         # Password is not valid
         payload_2 = {
             "username": user.email,
-            "password": user.password + "not-valid",
+            "password": user.password.get_secret_value() + "not-valid",
         }
         response = self.client.post("/api/v1/users/login", data=payload_2)
         self.assertEqual(response.status_code, 401)
@@ -140,7 +140,7 @@ class TestUsers(AsyncDbTestCase):
         user = self.get_example_registration_user()
         new_password = fake.password()
         change_password_payload = {
-            "old_password": user.password,
+            "old_password": user.password.get_secret_value(),
             "new_password": new_password,
         }
         response = self.client.post(
@@ -152,7 +152,7 @@ class TestUsers(AsyncDbTestCase):
 
         login_payload = {
             "username": user.email,
-            "password": user.password,
+            "password": user.password.get_secret_value(),
         }
         await self.test_register()
         response = self.client.post("/api/v1/users/login", data=login_payload)

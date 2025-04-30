@@ -18,6 +18,7 @@ from ..models.users import (
     RegistrationUserResponse,
     ResetPasswordRequest,
     Token,
+    passwordType,
 )
 from ..services.user_service import (
     TemporaryTokenExists,
@@ -78,7 +79,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> T
     user_service = UserService()
     token = await user_service.login_user(
         form_data.username,
-        form_data.password,
+        passwordType(form_data.password),
     )
     return token
 

@@ -4,6 +4,7 @@ import faker
 
 from ...datasources.db.connector import db_session_context
 from ...datasources.db.models import User
+from ...models.users import passwordType
 from ...services.user_service import (
     TemporaryTokenExists,
     TemporaryTokenNotValid,
@@ -26,8 +27,8 @@ class TestApiKeyService(AsyncDbTestCase):
             user_service.verify_password(old_password, user.hashed_password)
         )
 
-        new_password = fake.password()
-        wrong_old_password = fake.password()
+        new_password = passwordType(fake.password())
+        wrong_old_password = passwordType(fake.password())
         with self.assertRaises(WrongPassword):
             await user_service.change_password(user, wrong_old_password, new_password)
 
@@ -63,7 +64,7 @@ class TestApiKeyService(AsyncDbTestCase):
         assert right_token is not None
         self.assertEqual(user.email, user.email)
         wrong_token = str(uuid.uuid4())
-        new_password = fake.password()
+        new_password = passwordType(fake.password())
 
         with self.assertRaises(TemporaryTokenNotValid):
             await user_service.reset_password(user.email, wrong_token, new_password)
