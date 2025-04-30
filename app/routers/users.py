@@ -5,13 +5,18 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from starlette import status
 
-from ..datasources.email.email_client import send_temporary_token_email
+from ..datasources.email.email_client import (
+    send_register_temporary_token_email,
+    send_reset_password_temporary_token_email,
+)
 from ..models.users import (
     ChangePasswordRequest,
+    ForgotPasswordRequest,
     PreRegistrationResponse,
     PreRegistrationUser,
     RegistrationUser,
     RegistrationUserResponse,
+    ResetPasswordRequest,
     Token,
 )
 from ..services.user_service import (
@@ -38,7 +43,9 @@ async def pre_register(
     user_service = UserService()
     try:
         token = user_service.pre_register_user(user_request.email)
-        background_tasks.add_task(send_temporary_token_email, user_request.email, token)
+        background_tasks.add_task(
+            send_register_temporary_token_email, user_request.email, token
+        )
         return PreRegistrationResponse(token=token)
     except TemporaryTokenExists as e:
         raise HTTPException(
@@ -94,4 +101,28 @@ async def change_password(
         user,
         change_password_request.old_password,
         change_password_request.new_password,
+    )
+
+
+@router.post("/forgot-password", status_code=status.HTTP_204_NO_CONTENT)
+async def forgot_password(
+    forgot_password_request: ForgotPasswordRequest, background_tasks: BackgroundTasks
+):
+    user_service = UserService()
+    token = await user_service.get_forgot_password_token(forgot_password_request.email)
+    if token:
+        background_tasks.add_task(
+            send_reset_password_temporary_token_email,
+            forgot_password_request.email,
+            token,
+        )
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_password(reset_password_request: ResetPasswordRequest):
+    user_service = UserService()
+    await user_service.reset_password(
+        reset_password_request.email,
+        reset_password_request.token,
+        reset_password_request.new_password,
     )

@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import timedelta
 from typing import cast
@@ -38,8 +39,13 @@ class WrongPassword(UserServiceException):
     pass
 
 
+class UserDoesNotExist(UserServiceException):
+    pass
+
+
 class UserService:
     TEMPORARY_TOKEN_REGISTRATION_PREFIX = "temporary-token:registrations:"
+    TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX = "temporary-token:reset-password:"
 
     def __init__(self):
         self.jwt_service = JwtService()
@@ -160,11 +166,11 @@ class UserService:
         return Token(access_token=access_token, token_type="bearer")
 
     async def change_password(
-        self, user: User, old_password: str, new_password: str
+        self, user: User, old_password: str | None, new_password: str
     ) -> bool:
         """
-        Changes the password for an authenticated user.
-        Checks if the old password is correct.
+        Changes the password to the provided user.
+        If old_password is provided, the password will be checked against the old_password.
 
         Args:
             user: User instance
@@ -177,8 +183,62 @@ class UserService:
             WrongPassword: in case the old password is incorrect
 
         """
-        if not self.verify_password(old_password, user.hashed_password):
+        if old_password is not None and not self.verify_password(
+            old_password, user.hashed_password
+        ):
             raise WrongPassword("Incorrect password")
 
         hashed_password = self.hash_password(new_password)
         return await User.update_password(user.id, hashed_password)
+
+    async def get_forgot_password_token(self, email: str) -> str | None:
+        """
+        Return the temporary token for a provided email.
+
+        Args:
+            email:
+
+        Returns: a token if the email exists, None otherwise
+
+        """
+        if self.temporary_token_exists(
+            self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email
+        ):
+            raise TemporaryTokenExists(f"Temporary token exists for {email}")
+        # Check if the user exists
+        if not await User.get_by_email(email):
+            return None
+
+        token = self.temporary_token_generate(
+            self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email
+        )
+        return token
+
+    async def reset_password(self, email: str, token: str, new_password: str) -> bool:
+        """
+        Changes a password for a user with the provided password.
+        Checks that the email was verified from the provided token.
+
+        Args:
+            email:
+            token:
+            new_password:
+
+        Returns:
+
+        """
+        if not self.temporary_token_is_valid(
+            self.TEMPORARY_TOKEN_RESET_PASSWORD_PREFIX, email, token
+        ):
+            raise TemporaryTokenNotValid(f"Temporary token not valid for {email}")
+
+        user = await User.get_by_email(email)
+        if not user:
+            logging.critical(
+                f"User for reset password token ({token}) does not exist in the database."
+            )
+            raise UserDoesNotExist(
+                f"User for reset password token ({token}) does not exist in the database."
+            )
+
+        return await self.change_password(user, None, new_password)

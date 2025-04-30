@@ -1,3 +1,4 @@
+import uuid
 from unittest import mock
 
 from fastapi.testclient import TestClient
@@ -41,11 +42,11 @@ class TestUsers(AsyncDbTestCase):
         payload = {"email": user.email}
 
         with mock.patch(
-            "app.routers.users.send_temporary_token_email"
-        ) as send_temporary_token_email_mock:
+            "app.routers.users.send_register_temporary_token_email"
+        ) as send_register_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
-            send_temporary_token_email_mock.assert_called_once()
+            send_register_temporary_token_email_mock.assert_called_once()
 
         # Token will not be sent again until TTL expires
         response = self.client.post("/api/v1/users/pre-registrations", json=payload)
@@ -74,12 +75,14 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(count, 0)
 
         with mock.patch(
-            "app.routers.users.send_temporary_token_email"
-        ) as send_temporary_token_email_mock:
+            "app.routers.users.send_register_temporary_token_email"
+        ) as send_register_temporary_token_email_mock:
             response = self.client.post("/api/v1/users/pre-registrations", json=payload)
             self.assertEqual(response.status_code, 200)
-            send_temporary_token_email_mock.assert_called_once()
-            payload["token"] = send_temporary_token_email_mock.mock_calls[0].args[1]
+            send_register_temporary_token_email_mock.assert_called_once()
+            payload["token"] = send_register_temporary_token_email_mock.mock_calls[
+                0
+            ].args[1]
             response = self.client.post("/api/v1/users/registrations", json=payload)
             self.assertEqual(response.status_code, 201)
 
@@ -158,7 +161,6 @@ class TestUsers(AsyncDbTestCase):
         self.assertTrue(response.json()["access_token"])
         access_token = response.json()["access_token"]
 
-        # Test wrong old password
         response = self.client.post(
             "/api/v1/users/change-password",
             json=change_password_payload,
@@ -178,5 +180,88 @@ class TestUsers(AsyncDbTestCase):
         self.assertEqual(response.status_code, 401)
 
         login_payload["password"] = new_password
+        response = self.client.post("/api/v1/users/login", data=login_payload)
+        self.assertEqual(response.status_code, 200)
+
+    @db_session_context
+    @mock.patch("app.routers.users.send_reset_password_temporary_token_email")
+    async def test_forgot_password(
+        self, mock_send_reset_password_temporary_token_email: mock.MagicMock
+    ):
+        forgot_password_payload = {
+            "email": fake.email(),
+        }
+        # With wrong emails, shouldn´t return error to avoid share information about users.
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 204)
+        mock_send_reset_password_temporary_token_email.assert_not_called()
+
+        user = self.get_example_registration_user()
+        await self.test_register()
+        forgot_password_payload["email"] = user.email
+
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 204)
+        mock_send_reset_password_temporary_token_email.assert_called_once()
+
+        mock_send_reset_password_temporary_token_email.reset_mock()
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 409)
+
+    @db_session_context
+    @mock.patch("app.routers.users.send_reset_password_temporary_token_email")
+    async def test_reset_password(
+        self, mock_send_reset_password_temporary_token_email: mock.MagicMock
+    ):
+        user = self.get_example_registration_user()
+        await self.test_register()
+        forgot_password_payload = {
+            "email": user.email,
+        }
+
+        response = self.client.post(
+            "/api/v1/users/forgot-password", json=forgot_password_payload
+        )
+        self.assertEqual(response.status_code, 204)
+        mock_send_reset_password_temporary_token_email.assert_called_once()
+        email, token = mock_send_reset_password_temporary_token_email.call_args[0]
+        self.assertEqual(email, user.email)
+
+        new_password = fake.password()
+        reset_password_payload = {
+            "email": fake.email(),
+            "token": str(uuid.uuid4()),
+            "new_password": new_password,
+        }
+
+        response = self.client.post(
+            "/api/v1/users/reset-password", json=reset_password_payload
+        )
+        self.assertEqual(response.status_code, 422)
+
+        # Set the right token but keep a wrong email
+        reset_password_payload["token"] = token
+        response = self.client.post(
+            "/api/v1/users/reset-password", json=reset_password_payload
+        )
+        self.assertEqual(response.status_code, 422)
+
+        # Email and token are right
+        reset_password_payload["email"] = user.email
+        response = self.client.post(
+            "/api/v1/users/reset-password", json=reset_password_payload
+        )
+        self.assertEqual(response.status_code, 204)
+
+        login_payload = {
+            "username": user.email,
+            "password": new_password,
+        }
         response = self.client.post("/api/v1/users/login", data=login_payload)
         self.assertEqual(response.status_code, 200)

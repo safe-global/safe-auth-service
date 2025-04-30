@@ -1,4 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+
+from typing_extensions import Annotated
+
+passwordType = Annotated[str, Field(min_length=8)]
 
 
 class Token(BaseModel):
@@ -16,7 +20,7 @@ class PreRegistrationResponse(BaseModel):
 
 class RegistrationUser(PreRegistrationUser):
     token: str
-    password: str
+    password: passwordType
 
 
 class RegistrationUserResponse(PreRegistrationUser):
@@ -24,5 +28,15 @@ class RegistrationUserResponse(PreRegistrationUser):
 
 
 class ChangePasswordRequest(BaseModel):
-    old_password: str
-    new_password: str
+    old_password: passwordType
+    new_password: passwordType
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    token: str
+    new_password: passwordType

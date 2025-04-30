@@ -37,9 +37,20 @@ def send_email(to: str, content: str, subject: str) -> bool:
     return False
 
 
-def send_temporary_token_email(to: str, token: str) -> bool:
+def send_register_temporary_token_email(to: str, token: str) -> bool:
     return send_email(
         to,
         f"Please use this token to register an user {token}",
         "Register token for Safe Auth Service",
+    )
+
+
+def send_reset_password_temporary_token_email(to: str, token: str) -> bool:
+    return send_email(
+        to,
+        f"""
+            Please follow the following link to reset the password:
+            {settings.FORGOT_PASSWORD_URL}?token={token}
+       """,
+        "Reset password token for Safe Auth Service",
     )
