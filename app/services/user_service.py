@@ -184,7 +184,7 @@ class UserService:
             WrongPassword: in case the old password is incorrect
 
         """
-        if old_password and not self.verify_password(
+        if old_password is not None and not self.verify_password(
             old_password, user.hashed_password
         ):
             raise WrongPassword("Incorrect password")
@@ -211,14 +211,13 @@ class UserService:
         ):
             raise TemporaryTokenNotValid(f"Temporary token not valid for {email}")
 
-        # Changes the password without check the previous value
         user = await User.get_by_email(email)
         if not user:
             logging.critical(
-                f"User for reset password token ({token}) that does not exist in the database."
+                f"User for reset password token ({token}) does not exist in the database."
             )
             raise UserDoesNotExist(
-                f"User for reset password token ({token}) that does not exist in the database."
+                f"User for reset password token ({token}) does not exist in the database."
             )
 
         return await self.change_password(user, None, new_password)
