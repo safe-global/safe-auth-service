@@ -3,10 +3,11 @@ import uuid
 
 from pydantic import TypeAdapter
 
-from app.config import settings
-from app.datasources.db.models import ApiKey
-from app.models.api_key import ApiKeyPublic
-from app.services.jwt_service import JwtService
+from ..config import settings
+from ..datasources.api_gateway.apisix.apisix_client import get_apisix_client
+from ..datasources.db.models import ApiKey
+from ..models.api_key import ApiKeyPublic
+from ..services.jwt_service import JwtService
 
 
 async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic:
@@ -22,10 +23,15 @@ async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic
 
     """
     api_key_id = uuid.uuid4()
+    api_key_subject = f"{user_id.hex}_{api_key_id.hex}"
+    await get_apisix_client().upsert_consumer(
+        api_key_subject,
+        description=description,
+        consumer_group_name=settings.APISIX_FREEMIUM_CONSUMER_GROUP_NAME,
+    )
     access_token_expires = datetime.timedelta(days=settings.JWT_API_KEY_EXPIRE_DAYS)
-    subject = f"{user_id}_{api_key_id}"
     access_token = JwtService.create_access_token(
-        subject, access_token_expires, settings.JWT_AUDIENCE, {}
+        api_key_subject, access_token_expires, settings.JWT_AUDIENCE, {}
     )
     api_key = ApiKey(
         id=api_key_id, user_id=user_id, token=access_token, description=description
@@ -45,7 +51,11 @@ async def delete_api_key_by_id(api_key_id: uuid.UUID, user_id: uuid.UUID) -> boo
     Returns: True if the api key was deleted, False otherwise.
 
     """
-    return await ApiKey.delete_by_ids(api_key_id, user_id)
+    api_key_deleted = await ApiKey.delete_by_ids(api_key_id, user_id)
+    if api_key_deleted:
+        api_key_subject = f"{user_id.hex}_{api_key_id.hex}"
+        await get_apisix_client().delete_consumer(api_key_subject)
+    return api_key_deleted
 
 
 async def get_api_key_by_ids(

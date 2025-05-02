@@ -53,7 +53,9 @@ To open an interactive Python shell within a Docker container and query the data
 ```
 Example usage:
 ```python
-users = await Users.get_all()
+from app.datasources.db.models import User
+
+users = await User.get_all()
 print(users[0].email)
 ```
 Call `await restore_session()` to reopen a new session.

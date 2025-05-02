@@ -44,7 +44,7 @@ async def get_jwt_info_from_auth_token(
 
 
 def get_user_id_from_jwt(jwt_info: dict) -> uuid.UUID:
-    return jwt_info["sub"]
+    return uuid.UUID(jwt_info["sub"])
 
 
 async def get_user_from_jwt(jwt_info: dict) -> User:

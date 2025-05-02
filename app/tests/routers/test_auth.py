@@ -24,6 +24,7 @@ class TestAuth(AsyncDbTestCase):
 
         user = await get_jwt_info_from_auth_token(token)
         self.assertEqual(user["sub"], "user123")
+        self.assertEqual(user["key"], "user123")
 
     async def test_invalid_token(self):
         invalid_token = "invalid.token.value"

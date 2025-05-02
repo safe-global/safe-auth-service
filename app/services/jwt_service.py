@@ -35,6 +35,7 @@ class JwtService:
         to_encode = {
             "iss": settings.JWT_ISSUER,
             "sub": subject,
+            "key": subject,
             "aud": audience,
             "exp": expire,
             "data": data.copy(),

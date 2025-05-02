@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     APISIX_API_KEY: str = ""
     APISIX_CONNECTIONS_POOL_SIZE: int = 100
 
+    # Apisix Consumer Groups (Payment Plans) ---------------
+    APISIX_FREEMIUM_CONSUMER_GROUP_NAME: str = ""
+
     # Datadog ---------------
     DATADOG_BASE_URL: str = "https://api.datadoghq.eu"
     DATADOG_API_KEY: str = ""
