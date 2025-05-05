@@ -51,11 +51,14 @@ async def delete_api_key_by_id(api_key_id: uuid.UUID, user_id: uuid.UUID) -> boo
     Returns: True if the api key was deleted, False otherwise.
 
     """
-    api_key_deleted = await ApiKey.delete_by_ids(api_key_id, user_id)
-    if api_key_deleted:
-        api_key_subject = f"{user_id.hex}_{api_key_id.hex}"
-        await get_apisix_client().delete_consumer(api_key_subject)
-    return api_key_deleted
+    stored_api_key = await ApiKey.get_by_ids(api_key_id, user_id)
+
+    if not stored_api_key:
+        return False
+
+    api_key_subject = f"{user_id.hex}_{api_key_id.hex}"
+    await get_apisix_client().delete_consumer(api_key_subject)
+    return await ApiKey.delete_by_ids(api_key_id, user_id)
 
 
 async def get_api_key_by_ids(
