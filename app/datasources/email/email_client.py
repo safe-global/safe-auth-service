@@ -3,27 +3,39 @@ import smtplib
 from email.message import EmailMessage
 
 from ...config import settings
+from .templates.register import (
+    get_register_html_mail_content,
+    get_register_text_mail_content,
+)
+from .templates.reset_password import (
+    get_reset_password_html_mail_content,
+    get_reset_password_text_mail_content,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def send_email(to: str, content: str, subject: str) -> bool:
+def send_email(to: str, subject: str, html_content: str, text_content: str) -> bool:
     """
     Sends an email to an email address using the configured provider
 
     Args:
         to: Email address to send the email to
-        content: Content of the email
         subject: Subject of the email
+        html_content: HTML version of the email content
+        text_content: Plain text fallback version of the email content
 
     Returns:
         `True` if the email was sent, `False` otherwise
     """
     msg = EmailMessage()
-    msg.set_content(content)
+    msg.set_content(html_content, subtype="html")
+    msg.add_alternative(text_content, subtype="plain")
+
     msg["Subject"] = subject
     msg["From"] = settings.SMTP_FROM_ADDRESS
     msg["To"] = to
+
     try:
         with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as smtp_client:
             if settings.SMTP_STARTTLS:
@@ -40,17 +52,16 @@ def send_email(to: str, content: str, subject: str) -> bool:
 def send_register_temporary_token_email(to: str, token: str) -> bool:
     return send_email(
         to,
-        f"Please use this token to register an user {token}",
-        "Register token for Safe Auth Service",
+        "Verify Your Account - Safe Dashboard",
+        get_register_html_mail_content(token),
+        get_register_text_mail_content(token),
     )
 
 
 def send_reset_password_temporary_token_email(to: str, token: str) -> bool:
     return send_email(
         to,
-        f"""
-            Please follow the following link to reset the password:
-            {settings.FORGOT_PASSWORD_URL}?token={token}
-       """,
-        "Reset password token for Safe Auth Service",
+        "Recover Your Password - Safe Dashboard",
+        get_reset_password_html_mail_content(token),
+        get_reset_password_text_mail_content(token),
     )
