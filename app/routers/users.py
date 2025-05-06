@@ -13,7 +13,6 @@ from ..models.types import passwordType
 from ..models.users import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
-    PreRegistrationResponse,
     PreRegistrationUser,
     RegistrationUser,
     RegistrationUserResponse,
@@ -34,20 +33,16 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/pre-registrations",
-    response_model=PreRegistrationResponse,
-)
+@router.post("/pre-registrations", status_code=status.HTTP_204_NO_CONTENT)
 async def pre_register(
     user_request: PreRegistrationUser, background_tasks: BackgroundTasks
-) -> PreRegistrationResponse:
+):
     user_service = UserService()
     try:
         token = user_service.pre_register_user(user_request.email)
         background_tasks.add_task(
             send_register_temporary_token_email, user_request.email, token
         )
-        return PreRegistrationResponse(token=token)
     except TemporaryTokenExists as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)

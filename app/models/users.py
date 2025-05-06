@@ -12,10 +12,6 @@ class PreRegistrationUser(BaseModel):
     email: EmailStr
 
 
-class PreRegistrationResponse(BaseModel):
-    token: str
-
-
 class RegistrationUser(PreRegistrationUser):
     token: str
     password: passwordType
