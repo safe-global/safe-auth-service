@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 import faker
 
-from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.db.connector import db_session_context
 from app.main import app
 
@@ -17,24 +16,13 @@ from ..datasources.db.factory import generate_random_user
 fake = faker.Faker()
 
 
-class TestClientWithTearDown(TestClient):
-
-    def tearDown(self):
-        get_apisix_client.cache_clear()
-
-    def request(self, method, url, *args, **kwargs):
-        response = super().request(method, url, *args, **kwargs)
-        self.tearDown()
-        return response
-
-
 class TestApiKeys(AsyncDbTestCase):
     client: TestClient
 
     @db_session_context
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.client = TestClientWithTearDown(app)
+        self.client = TestClient(app)
         user_service = UserService()
         user, password = await generate_random_user()
         self.user = user

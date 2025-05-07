@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 import faker
 
+from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.cache.redis import get_redis
 from app.datasources.db.connector import db_session_context
 from app.datasources.db.models import User
@@ -17,12 +18,23 @@ from ..datasources.db.async_db_test_case import AsyncDbTestCase
 fake = faker.Faker()
 
 
+class TestClientWithRequestCallback(TestClient):
+
+    def callback(self):
+        get_apisix_client.cache_clear()
+
+    def request(self, method, url, *args, **kwargs):
+        response = super().request(method, url, *args, **kwargs)
+        self.callback()
+        return response
+
+
 class TestUsers(AsyncDbTestCase):
     client: TestClient
 
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = TestClientWithRequestCallback(app)
         get_redis().flushall()
 
     def tearDown(self):
