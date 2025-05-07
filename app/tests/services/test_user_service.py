@@ -19,30 +19,38 @@ fake = faker.Faker()
 
 class TestApiKeyService(AsyncDbTestCase):
 
+    def setUp(self):
+        self.user_service = UserService()
+
     @db_session_context
     async def test_change_password(self):
         user, old_password = await generate_random_user()
-        user_service = UserService()
         self.assertTrue(
-            user_service.verify_password(old_password, user.hashed_password)
+            self.user_service.verify_password(old_password, user.hashed_password)
         )
 
         new_password = passwordType(fake.password())
         wrong_old_password = passwordType(fake.password())
         with self.assertRaises(WrongPassword):
-            await user_service.change_password(user, wrong_old_password, new_password)
+            await self.user_service.change_password(
+                user, wrong_old_password, new_password
+            )
 
         self.assertTrue(
-            await user_service.change_password(user, old_password, new_password)
+            await self.user_service.change_password(user, old_password, new_password)
         )
         # Get user from database again
         updated_user = await User.get_by_user_id(user.id)
         assert updated_user is not None
         self.assertFalse(
-            user_service.verify_password(old_password, updated_user.hashed_password)
+            self.user_service.verify_password(
+                old_password, updated_user.hashed_password
+            )
         )
         self.assertTrue(
-            user_service.verify_password(new_password, updated_user.hashed_password)
+            self.user_service.verify_password(
+                new_password, updated_user.hashed_password
+            )
         )
 
     @db_session_context
@@ -80,3 +88,20 @@ class TestApiKeyService(AsyncDbTestCase):
         self.assertTrue(
             user_service.verify_password(new_password, updated_user.hashed_password)
         )
+
+    @db_session_context
+    async def test_login_or_register(self):
+        self.assertEqual(await User.count(), 0)
+        random_email = "random@safe.global"
+        # Email must be registered
+        token = await self.user_service.login_or_register(random_email)
+        self.assertEqual(await User.count(), 1)
+        self.assertIsNotNone(token.access_token)
+        self.assertEqual(token.token_type, "bearer")
+
+        # Login after register
+        token_2 = await self.user_service.login_or_register(random_email)
+        self.assertEqual(await User.count(), 1)
+        self.assertIsNotNone(token.access_token)
+        self.assertEqual(token.token_type, "bearer")
+        self.assertNotEqual(token_2.access_token, token.access_token)
