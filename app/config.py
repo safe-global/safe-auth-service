@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     PROMETHEUS_CONNECTIONS_POOL_SIZE: int = 100
 
     # URLS
-    FORGOT_PASSWORD_URL: str = ""
+    FRONTEND_BASE_URL: str = ""
 
 
 settings = Settings()

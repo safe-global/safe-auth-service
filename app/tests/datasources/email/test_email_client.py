@@ -47,7 +47,7 @@ class TestEmailClient(IsolatedAsyncioTestCase):
     async def test_send_email(self):
         self.assertEqual(await self._get_number_messages(), 0)
         sent_successfully = send_email(
-            "random-address@safe.global", "<b>Hello!</b>", "Test subject"
+            "random-address@safe.global", "Test subject", "<b>Hello!</b>", "Hello!"
         )
         self.assertTrue(sent_successfully)
         self.assertEqual(await self._get_number_messages(), 1)
