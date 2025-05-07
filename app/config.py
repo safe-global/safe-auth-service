@@ -51,6 +51,7 @@ class Settings(BaseSettings):
 
     # Apisix Consumer Groups (Payment Plans) ---------------
     APISIX_FREEMIUM_CONSUMER_GROUP_NAME: str = ""
+    APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT: int = 10
 
     # Datadog ---------------
     DATADOG_BASE_URL: str = "https://api.datadoghq.eu"

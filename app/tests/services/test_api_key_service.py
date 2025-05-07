@@ -11,6 +11,7 @@ from ...datasources.api_gateway.exceptions import ApiGatewayRequestError
 from ...datasources.db.models import ApiKey
 from ...models.api_key import ApiKeyPublic
 from ...services.api_key_service import (
+    ApiKeyCreationLimitReached,
     delete_api_key_by_id,
     generate_api_key,
     get_api_key_by_ids,
@@ -58,6 +59,15 @@ class TestApiKeyService(AsyncDbTestCase):
         decoded_token = await get_jwt_info_from_auth_token(api_key.token)
         self.assertEqual(api_key_subject, decoded_token["sub"])
         self.assertEqual(api_key_subject, decoded_token["key"])
+
+        with patch(
+            "app.config.settings.APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT",
+            2,
+        ):
+            api_key = await generate_api_key(user.id, description="Api key for testing")
+            self.assertIsNotNone(api_key)
+            with self.assertRaises(ApiKeyCreationLimitReached):
+                await generate_api_key(user.id, description="Api key for testing")
 
     @db_session_context
     async def test_delete_api_key_by_id(self):
