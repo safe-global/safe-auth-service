@@ -1,10 +1,13 @@
 import uuid
+from unittest.mock import patch
 
 import faker
 
+from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.db.connector import db_session_context
 from app.routers.auth import get_jwt_info_from_auth_token
 
+from ...datasources.api_gateway.exceptions import ApiGatewayRequestError
 from ...datasources.db.models import ApiKey
 from ...models.api_key import ApiKeyPublic
 from ...services.api_key_service import (
@@ -20,10 +23,23 @@ fake = faker.Faker()
 
 
 class TestApiKeyService(AsyncDbTestCase):
+
+    def setUp(self):
+        get_apisix_client.cache_clear()
+
+    def tearDown(self):
+        get_apisix_client.cache_clear()
+
     @db_session_context
     async def test_generate_api_key(self):
         user, _ = await generate_random_user()
-        api_key = await generate_api_key(user.id, description="Api key for testing")
+        freemium_consumer_group_name = "freemium_consumer_group"
+        await get_apisix_client().add_consumer_group(freemium_consumer_group_name)
+        with patch(
+            "app.config.settings.APISIX_FREEMIUM_CONSUMER_GROUP_NAME",
+            freemium_consumer_group_name,
+        ):
+            api_key = await generate_api_key(user.id, description="Api key for testing")
         self.assertIsNotNone(api_key)
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertEqual(api_key.id, stored_api_key.id)
@@ -31,9 +47,17 @@ class TestApiKeyService(AsyncDbTestCase):
         self.assertEqual(api_key.token, stored_api_key.token)
         self.assertEqual(api_key.description, stored_api_key.description)
 
-        # The subjects is generated correctly
+        api_key_subject = f"{user.id.hex}_{api_key.id.hex}"
+        apisix_consumer = await get_apisix_client().get_consumer(api_key_subject)
+        self.assertIsNotNone(apisix_consumer)
+        self.assertEqual(
+            apisix_consumer.consumer_group_name, freemium_consumer_group_name
+        )
+
+        # The subject and key are generated correctly.
         decoded_token = await get_jwt_info_from_auth_token(api_key.token)
-        self.assertEqual(f"{str(user.id)}_{str(api_key.id)}", decoded_token["sub"])
+        self.assertEqual(api_key_subject, decoded_token["sub"])
+        self.assertEqual(api_key_subject, decoded_token["key"])
 
     @db_session_context
     async def test_delete_api_key_by_id(self):
@@ -44,12 +68,17 @@ class TestApiKeyService(AsyncDbTestCase):
         api_key = await generate_api_key(user.id, description="Api key for testing")
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertIsNotNone(stored_api_key)
+        api_key_subject = f"{user.id.hex}_{api_key.id.hex}"
+        apisix_consumer = await get_apisix_client().get_consumer(api_key_subject)
+        self.assertIsNotNone(apisix_consumer)
 
         result = await delete_api_key_by_id(api_key.id, user.id)
         self.assertTrue(result)
 
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertIsNone(stored_api_key)
+        with self.assertRaises(ApiGatewayRequestError):
+            await get_apisix_client().get_consumer(api_key_subject)
 
     @db_session_context
     async def test_get_api_key_by_ids(self):

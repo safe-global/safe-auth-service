@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 import faker
 
+from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.db.connector import db_session_context
 from app.main import app
 
@@ -16,13 +17,24 @@ from ..datasources.db.factory import generate_random_user
 fake = faker.Faker()
 
 
+class TestClientWithTearDown(TestClient):
+
+    def tearDown(self):
+        get_apisix_client.cache_clear()
+
+    def request(self, method, url, *args, **kwargs):
+        response = super().request(method, url, *args, **kwargs)
+        self.tearDown()
+        return response
+
+
 class TestApiKeys(AsyncDbTestCase):
     client: TestClient
 
     @db_session_context
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.client = TestClient(app)
+        self.client = TestClientWithTearDown(app)
         user_service = UserService()
         user, password = await generate_random_user()
         self.user = user
@@ -30,11 +42,11 @@ class TestApiKeys(AsyncDbTestCase):
 
     @db_session_context
     async def test_create_api_key(self):
-        response = self.client.post("/api/v1/api-keys/")
+        response = self.client.post("/api/v1/api-keys")
         self.assertEqual(response.status_code, 401)
 
         response = self.client.post(
-            "/api/v1/api-keys/",
+            "/api/v1/api-keys",
             headers={"Authorization": "Bearer " + self.token.access_token},
             json={"description": "Api key for testing"},
         )
@@ -91,11 +103,11 @@ class TestApiKeys(AsyncDbTestCase):
     @db_session_context
     async def test_get_api_keys(self):
         random_uuid = uuid.uuid4()
-        response = self.client.get("/api/v1/api-keys/")
+        response = self.client.get("/api/v1/api-keys")
         self.assertEqual(response.status_code, 401)
 
         response = self.client.get(
-            "/api/v1/api-keys/",
+            "/api/v1/api-keys",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
         self.assertEqual(response.status_code, 200)
@@ -109,7 +121,7 @@ class TestApiKeys(AsyncDbTestCase):
 
         api_key = api_keys[0]
         response = self.client.get(
-            "/api/v1/api-keys/",
+            "/api/v1/api-keys",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
         self.assertEqual(response.status_code, 200)
@@ -161,7 +173,7 @@ class TestApiKeys(AsyncDbTestCase):
             user.id, description="Api key for testing"
         )
 
-        response = self.client.get(
+        response = self.client.delete(
             f"/api/v1/api-keys/{str(other_api_key.id)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
