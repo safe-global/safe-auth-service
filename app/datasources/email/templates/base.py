@@ -1,9 +1,15 @@
 import base64
+from functools import cache
+
+
+@cache
+def _get_safe_logo_base64() -> str:
+    with open("static/safe_logo.png", "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
 
 def get_mail_base_html_template(mail_body: str) -> str:
-    with open("static/safe_logo.png", "rb") as image_file:
-        safe_logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+    safe_logo_base64 = _get_safe_logo_base64()
 
     return f"""
     <!DOCTYPE html>
@@ -11,6 +17,7 @@ def get_mail_base_html_template(mail_body: str) -> str:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
             <style>
                 body {{
                     font-family: sans-serif;
