@@ -1,9 +1,11 @@
 import logging
+import secrets
 import uuid
 from datetime import timedelta
 from typing import cast
 
 from fastapi import HTTPException
+from pydantic import SecretStr
 
 import bcrypt
 from starlette import status
@@ -50,6 +52,13 @@ class UserService:
 
     def __init__(self):
         self.jwt_service = JwtService()
+
+    def emit_access_token(self, user_id: uuid.UUID) -> Token:
+        access_token_expires = timedelta(days=settings.JWT_AUTH_SERVICE_EXPIRE_DAYS)
+        access_token = self.jwt_service.create_access_token(
+            user_id.hex, access_token_expires, settings.JWT_AUDIENCE, {}
+        )
+        return Token(access_token=access_token, token_type="bearer")
 
     def verify_password(
         self, plain_password: passwordType, hashed_password: str
@@ -127,7 +136,7 @@ class UserService:
 
     async def register_user(
         self, email: str, password: passwordType, token: str
-    ) -> str:
+    ) -> uuid.UUID:
         """
         Args:
             email:
@@ -149,7 +158,7 @@ class UserService:
         if await User.get_by_email(email):
             raise UserAlreadyExists(f"User with email {email} already exists")
         hashed_password = self.hash_password(password)
-        user_uuid = uuid.uuid4().hex
+        user_uuid = uuid.uuid4()
         user = User(id=user_uuid, email=email, hashed_password=hashed_password)
         await user.create()
         return user_uuid
@@ -170,11 +179,28 @@ class UserService:
                 detail="Incorrect username or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token_expires = timedelta(days=settings.JWT_AUTH_SERVICE_EXPIRE_DAYS)
-        access_token = self.jwt_service.create_access_token(
-            user.id.hex, access_token_expires, settings.JWT_AUDIENCE, {}
-        )
-        return Token(access_token=access_token, token_type="bearer")
+        return self.emit_access_token(user.id)
+
+    async def login_or_register(self, email: str) -> Token:
+        """
+        For Oauth2 3rd party services (like Google login), force login or register with just the email
+
+        Args:
+            email:
+
+        Returns:
+            JWT token
+        """
+        user = await User.get_by_email(email)
+        if not user:
+            random_password = SecretStr(
+                secrets.token_hex(64)
+            )  # Random password so user can change it afterward
+            hashed_password = self.hash_password(random_password)
+            user_uuid = uuid.uuid4()
+            user = User(id=user_uuid, email=email, hashed_password=hashed_password)
+            await user.create()
+        return self.emit_access_token(user.id)
 
     async def change_password(
         self, user: User, old_password: passwordType | None, new_password: passwordType

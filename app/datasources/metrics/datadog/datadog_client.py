@@ -2,7 +2,6 @@ import datetime
 from functools import cache
 
 import aiohttp
-from aiohttp import ClientTimeout
 from safe_eth.util.http import build_full_url
 
 from ....config import settings
@@ -96,7 +95,7 @@ class DatadogClient:
             response = await self.async_session.get(
                 full_url,
                 headers=headers,
-                timeout=ClientTimeout(total=self.request_timeout),
+                timeout=aiohttp.ClientTimeout(total=self.request_timeout),
             )
 
         except (ValueError, IOError) as e:

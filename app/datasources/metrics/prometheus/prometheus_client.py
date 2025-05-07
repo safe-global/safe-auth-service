@@ -4,7 +4,6 @@ from functools import cache
 from typing import Any
 
 import aiohttp
-from aiohttp import ClientTimeout
 from safe_eth.util.http import build_full_url
 
 from ....config import settings
@@ -60,7 +59,7 @@ class PrometheusClient:
             response = await self.async_session.get(
                 full_url,
                 params=params,
-                timeout=ClientTimeout(total=self.request_timeout),
+                timeout=aiohttp.ClientTimeout(total=self.request_timeout),
             )
         except (ValueError, IOError) as e:
             raise MetricsRequestError(

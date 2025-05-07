@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, EmailStr
 
 from app.models.types import passwordType
@@ -18,7 +20,7 @@ class RegistrationUser(PreRegistrationUser):
 
 
 class RegistrationUserResponse(PreRegistrationUser):
-    uuid: str
+    uuid: uuid.UUID
 
 
 class ChangePasswordRequest(BaseModel):
