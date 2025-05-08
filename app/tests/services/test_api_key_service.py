@@ -1,5 +1,4 @@
 import uuid
-from unittest.mock import patch
 
 import faker
 
@@ -30,16 +29,15 @@ class TestApiKeyService(AsyncDbTestCase):
     def tearDown(self):
         get_apisix_client.cache_clear()
 
+    async def _generate_random_user_with_apisix_consumer_group(self):
+        user, password = await generate_random_user()
+        await get_apisix_client().add_consumer_group(f"{user.id.hex}")
+        return user, password
+
     @db_session_context
     async def test_generate_api_key(self):
-        user, _ = await generate_random_user()
-        freemium_consumer_group_name = "freemium_consumer_group"
-        await get_apisix_client().add_consumer_group(freemium_consumer_group_name)
-        with patch(
-            "app.config.settings.APISIX_FREEMIUM_CONSUMER_GROUP_NAME",
-            freemium_consumer_group_name,
-        ):
-            api_key = await generate_api_key(user.id, description="Api key for testing")
+        user, _ = await self._generate_random_user_with_apisix_consumer_group()
+        api_key = await generate_api_key(user.id, description="Api key for testing")
         self.assertIsNotNone(api_key)
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertEqual(api_key.id, stored_api_key.id)
@@ -50,9 +48,7 @@ class TestApiKeyService(AsyncDbTestCase):
         api_key_subject = f"{user.id.hex}_{api_key.id.hex}"
         apisix_consumer = await get_apisix_client().get_consumer(api_key_subject)
         self.assertIsNotNone(apisix_consumer)
-        self.assertEqual(
-            apisix_consumer.consumer_group_name, freemium_consumer_group_name
-        )
+        self.assertEqual(apisix_consumer.consumer_group_name, f"{user.id.hex}")
 
         # The subject and key are generated correctly.
         decoded_token = await get_jwt_info_from_auth_token(api_key.token)
@@ -61,7 +57,7 @@ class TestApiKeyService(AsyncDbTestCase):
 
     @db_session_context
     async def test_delete_api_key_by_id(self):
-        user, _ = await generate_random_user()
+        user, _ = await self._generate_random_user_with_apisix_consumer_group()
         result = await delete_api_key_by_id(uuid.uuid4(), user.id)
         self.assertFalse(result)
 

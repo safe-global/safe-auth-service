@@ -2,6 +2,8 @@ import uuid
 
 import faker
 
+from ...datasources.api_gateway.apisix.apisix_client import get_apisix_client
+from ...datasources.cache.redis import get_redis
 from ...datasources.db.connector import db_session_context
 from ...datasources.db.models import User
 from ...models.types import passwordType
@@ -21,6 +23,12 @@ class TestApiKeyService(AsyncDbTestCase):
 
     def setUp(self):
         self.user_service = UserService()
+        get_apisix_client.cache_clear()
+        get_redis().flushall()
+
+    def tearDown(self):
+        get_apisix_client.cache_clear()
+        get_redis().flushall()
 
     @db_session_context
     async def test_change_password(self):
@@ -90,14 +98,53 @@ class TestApiKeyService(AsyncDbTestCase):
         )
 
     @db_session_context
+    async def test_register_user(self):
+        self.assertEqual(await User.count(), 0)
+        random_email_a = "random.1@safe.global"
+        random_password = passwordType(fake.password())
+        pre_register_token = self.user_service.pre_register_user(random_email_a)
+        registered_user_a_id = await self.user_service.register_user(
+            random_email_a, random_password, pre_register_token
+        )
+        self.assertEqual(await User.count(), 1)
+        apisix_consumer_group_a_name = f"{registered_user_a_id.hex}"
+        apisix_consumer_group_a = await get_apisix_client().get_consumer_group(
+            apisix_consumer_group_a_name
+        )
+        self.assertIsNotNone(apisix_consumer_group_a)
+        self.assertNotEqual(apisix_consumer_group_a.plugins, {})
+
+        random_email_b = "random.2@safe.global"
+        random_password = passwordType(fake.password())
+        pre_register_token = self.user_service.pre_register_user(random_email_b)
+        registered_user_id_b = await self.user_service.register_user(
+            random_email_b, random_password, pre_register_token
+        )
+        self.assertEqual(await User.count(), 2)
+        apisix_consumer_group_b_name = f"{registered_user_id_b.hex}"
+        apisix_consumer_group_b = await get_apisix_client().get_consumer_group(
+            apisix_consumer_group_b_name
+        )
+        self.assertIsNotNone(apisix_consumer_group_b)
+        self.assertNotEqual(apisix_consumer_group_b.plugins, {})
+
+    @db_session_context
     async def test_login_or_register(self):
         self.assertEqual(await User.count(), 0)
-        random_email = "random@safe.global"
+        random_email = "random.google.email@safe.global"
         # Email must be registered
         token = await self.user_service.login_or_register(random_email)
         self.assertEqual(await User.count(), 1)
         self.assertIsNotNone(token.access_token)
         self.assertEqual(token.token_type, "bearer")
+        user = await User.get_by_email(random_email)
+        assert user is not None
+        apisix_consumer_group_name = f"{user.id.hex}"
+        apisix_consumer_group = await get_apisix_client().get_consumer_group(
+            apisix_consumer_group_name
+        )
+        self.assertIsNotNone(apisix_consumer_group)
+        self.assertNotEqual(apisix_consumer_group.plugins, {})
 
         # Login after register
         token_2 = await self.user_service.login_or_register(random_email)

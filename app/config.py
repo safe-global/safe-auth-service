@@ -57,7 +57,8 @@ class Settings(BaseSettings):
     APISIX_CONNECTIONS_POOL_SIZE: int = 100
 
     # Apisix Consumer Groups (Payment Plans) ---------------
-    APISIX_FREEMIUM_CONSUMER_GROUP_NAME: str = ""
+    APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_MAX: int = 10
+    APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_TIME_WINDOW_SECONDS: int = 1
 
     # Datadog ---------------
     DATADOG_BASE_URL: str = "https://api.datadoghq.eu"

@@ -11,6 +11,7 @@ import bcrypt
 from starlette import status
 
 from ..config import settings
+from ..datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from ..datasources.cache.redis import get_redis
 from ..datasources.db.models import User
 from ..models.types import passwordType
@@ -52,6 +53,29 @@ class UserService:
 
     def __init__(self):
         self.jwt_service = JwtService()
+
+    async def _create_new_user(self, email: str, password: passwordType) -> User:
+        """
+        Creates a new user, registers them in APISIX as a consumer group with a rate limit, and saves them to the database.
+
+        Args:
+            email (str): User's email address.
+            password (passwordType): Plain-text password.
+
+        Returns:
+            User: The created user instance.
+        """
+        hashed_password = self.hash_password(password)
+        user_uuid = uuid.uuid4()
+        await get_apisix_client().add_consumer_group(f"{user_uuid.hex}")
+        await get_apisix_client().set_rate_limit_to_consumer_group(
+            f"{user_uuid.hex}",
+            settings.APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_MAX,
+            settings.APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_TIME_WINDOW_SECONDS,
+        )
+        user = User(id=user_uuid, email=email, hashed_password=hashed_password)
+        await user.create()
+        return user
 
     def emit_access_token(self, user_id: uuid.UUID) -> Token:
         access_token_expires = timedelta(days=settings.JWT_AUTH_SERVICE_EXPIRE_DAYS)
@@ -157,11 +181,8 @@ class UserService:
             raise TemporaryTokenNotValid(f"Temporary token not valid for {email}")
         if await User.get_by_email(email):
             raise UserAlreadyExists(f"User with email {email} already exists")
-        hashed_password = self.hash_password(password)
-        user_uuid = uuid.uuid4()
-        user = User(id=user_uuid, email=email, hashed_password=hashed_password)
-        await user.create()
-        return user_uuid
+        user = await self._create_new_user(email, password)
+        return user.id
 
     async def authenticate_user(
         self, email: str, password: passwordType
@@ -196,10 +217,7 @@ class UserService:
             random_password = SecretStr(
                 secrets.token_hex(64)
             )  # Random password so user can change it afterward
-            hashed_password = self.hash_password(random_password)
-            user_uuid = uuid.uuid4()
-            user = User(id=user_uuid, email=email, hashed_password=hashed_password)
-            await user.create()
+            user = await self._create_new_user(email, random_password)
         return self.emit_access_token(user.id)
 
     async def change_password(

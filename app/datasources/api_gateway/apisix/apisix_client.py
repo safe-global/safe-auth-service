@@ -250,7 +250,7 @@ class ApisixClient(ApiGatewayClient):
                     "rejected_code": 429,
                     "rejected_msg": "Too many requests",
                     "key_type": "var",
-                    "key": "consumer_name",
+                    "key": "consumer_group_name",
                 }
             }
         }
