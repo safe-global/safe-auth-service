@@ -1,8 +1,8 @@
 """initial_migration
 
-Revision ID: e7aa50584db4
+Revision ID: 74f355f61b76
 Revises:
-Create Date: 2025-04-25 13:32:49.803493
+Create Date: 2025-05-08 13:56:34.853978
 
 """
 
@@ -13,7 +13,7 @@ import sqlmodel
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "e7aa50584db4"
+revision: str = "74f355f61b76"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -37,7 +37,7 @@ def upgrade() -> None:
         sa.Column("modified", sa.DateTime(timezone=True), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column("token", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("key", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column(
             "description", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False
         ),
@@ -46,7 +46,7 @@ def upgrade() -> None:
             ["user.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("token"),
+        sa.UniqueConstraint("key"),
     )
     op.create_index(op.f("ix_apikey_created"), "apikey", ["created"], unique=False)
     # ### end Alembic commands ###

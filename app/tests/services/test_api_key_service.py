@@ -44,7 +44,7 @@ class TestApiKeyService(AsyncDbTestCase):
         stored_api_key = await ApiKey.get_by_ids(api_key.id, user.id)
         self.assertEqual(api_key.id, stored_api_key.id)
         self.assertEqual(api_key.created, stored_api_key.created)
-        self.assertEqual(api_key.token, stored_api_key.token)
+        self.assertEqual(api_key.key, stored_api_key.key)
         self.assertEqual(api_key.description, stored_api_key.description)
 
         api_key_subject = f"{user.id.hex}_{api_key.id.hex}"
@@ -55,7 +55,7 @@ class TestApiKeyService(AsyncDbTestCase):
         )
 
         # The subject and key are generated correctly.
-        decoded_token = await get_jwt_info_from_auth_token(api_key.token)
+        decoded_token = await get_jwt_info_from_auth_token(api_key.key)
         self.assertEqual(api_key_subject, decoded_token["sub"])
         self.assertEqual(api_key_subject, decoded_token["key"])
 
@@ -94,7 +94,7 @@ class TestApiKeyService(AsyncDbTestCase):
         assert api_key_public is not None
         self.assertEqual(api_key_db.id, api_key_public.id)
         self.assertEqual(api_key_db.created, api_key_public.created)
-        self.assertEqual(api_key_db.token, api_key_public.token)
+        self.assertEqual(api_key_db.key, api_key_public.key)
         self.assertFalse(hasattr(api_key_public, "user_id"))
         self.assertEqual(api_key_db.description, api_key_public.description)
 
@@ -115,6 +115,6 @@ class TestApiKeyService(AsyncDbTestCase):
             self.assertIsInstance(result, ApiKeyPublic)
             self.assertEqual(result.id, api_key.id)
             self.assertEqual(result.created, api_key.created)
-            self.assertEqual(result.token, api_key.token)
+            self.assertEqual(result.key, api_key.key)
             self.assertFalse(hasattr(result, "user_id"))
             self.assertEqual(result.description, api_key.description)

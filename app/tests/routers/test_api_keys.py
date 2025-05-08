@@ -52,7 +52,7 @@ class TestApiKeys(AsyncDbTestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertIsNotNone(response.json().get("id"))
-        self.assertIsNotNone(response.json().get("token"))
+        self.assertIsNotNone(response.json().get("key"))
         self.assertIsNotNone(response.json().get("created"))
         self.assertIsNotNone(response.json().get("description"))
 
@@ -81,7 +81,7 @@ class TestApiKeys(AsyncDbTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json().get("id"), str(api_key.id))
-        self.assertEqual(response.json().get("token"), api_key.token)
+        self.assertEqual(response.json().get("key"), api_key.key)
         self.assertEqual(
             response.json().get("created"),
             api_key.created.isoformat().replace("+00:00", "Z"),
@@ -128,7 +128,7 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertEqual(len(response.json()), 1)
         result = response.json()[0]
         self.assertEqual(result.get("id"), str(api_key.id))
-        self.assertEqual(result.get("token"), api_key.token)
+        self.assertEqual(result.get("key"), api_key.key)
         self.assertEqual(
             result.get("created"), api_key.created.isoformat().replace("+00:00", "Z")
         )
