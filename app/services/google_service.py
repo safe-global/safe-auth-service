@@ -10,6 +10,9 @@ from ..models.google import GoogleUser
 
 
 class GoogleService:
+    def is_configured(self) -> bool:
+        return bool(settings.GOOGLE_CLIENT_ID) and bool(settings.GOOGLE_CLIENT_SECRET)
+
     def get_login_url(self) -> str:
         authorization_url = settings.GOOGLE_AUTHORIZATION_URL
         params = {
