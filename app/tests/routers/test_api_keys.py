@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import patch
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -9,6 +9,7 @@ from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.db.connector import db_session_context
 from app.main import app
 
+from ...config import settings
 from ...datasources.db.models import ApiKey
 from ...services.api_key_service import generate_api_key
 from ...services.user_service import UserService
@@ -57,9 +58,8 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertIsNotNone(response.json().get("created"))
         self.assertIsNotNone(response.json().get("description"))
 
-        with patch(
-            "app.config.settings.APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT",
-            1,
+        with mock.patch.object(
+            settings, "APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT", 1
         ):
             response = self.client.post(
                 "/api/v1/api-keys",
