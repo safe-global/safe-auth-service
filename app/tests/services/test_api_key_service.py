@@ -1,6 +1,5 @@
 import uuid
 from unittest import mock
-from unittest.mock import patch
 
 import faker
 
@@ -35,7 +34,7 @@ class TestApiKeyService(AsyncDbTestCase):
 
     async def _generate_random_user_with_apisix_consumer_group(self):
         user, password = await generate_random_user()
-        await get_apisix_client().add_consumer_group(f"{user.id.hex}")
+        await get_apisix_client().add_consumer_group(user.id.hex)
         return user, password
 
     @db_session_context
@@ -52,7 +51,7 @@ class TestApiKeyService(AsyncDbTestCase):
         api_key_subject = f"{user.id.hex}_{api_key.id.hex}"
         apisix_consumer = await get_apisix_client().get_consumer(api_key_subject)
         self.assertIsNotNone(apisix_consumer)
-        self.assertEqual(apisix_consumer.consumer_group_name, f"{user.id.hex}")
+        self.assertEqual(apisix_consumer.consumer_group_name, user.id.hex)
 
         # The subject and key are generated correctly.
         decoded_token = await get_jwt_info_from_auth_token(api_key.token)

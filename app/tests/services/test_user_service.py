@@ -139,9 +139,8 @@ class TestApiKeyService(AsyncDbTestCase):
         self.assertEqual(token.token_type, "bearer")
         user = await User.get_by_email(random_email)
         assert user is not None
-        apisix_consumer_group_name = f"{user.id.hex}"
         apisix_consumer_group = await get_apisix_client().get_consumer_group(
-            apisix_consumer_group_name
+            user.id.hex
         )
         self.assertIsNotNone(apisix_consumer_group)
         self.assertNotEqual(apisix_consumer_group.plugins, {})

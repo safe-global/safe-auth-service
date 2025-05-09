@@ -40,7 +40,7 @@ class TestApiKeys(AsyncDbTestCase):
 
     async def _generate_random_user_with_apisix_consumer_group(self):
         user, password = await generate_random_user()
-        await get_apisix_client().add_consumer_group(f"{user.id.hex}")
+        await get_apisix_client().add_consumer_group(user.id.hex)
         return user, password
 
     @db_session_context
@@ -61,7 +61,7 @@ class TestApiKeys(AsyncDbTestCase):
         with mock.patch.object(
             settings, "APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT", 1
         ):
-            response = self.client.post(
+            response = await self.client.post(
                 "/api/v1/api-keys",
                 headers={"Authorization": "Bearer " + self.token.access_token},
                 json={"description": "Api key for testing"},
