@@ -57,12 +57,11 @@ async def pre_register(
 async def register(user_request: RegistrationUser) -> RegistrationUserResponse:
     user_service = UserService()
     try:
-        user_uuid = await user_service.register_user(
-            user_request.email,
+        user = await user_service.register_user(
             user_request.password,
             user_request.token,
         )
-        return RegistrationUserResponse(email=user_request.email, uuid=user_uuid)
+        return RegistrationUserResponse(email=user.email, uuid=user.id)
     except (TemporaryTokenNotValid, UserAlreadyExists) as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
@@ -118,7 +117,6 @@ async def forgot_password(
 async def reset_password(reset_password_request: ResetPasswordRequest):
     user_service = UserService()
     await user_service.reset_password(
-        reset_password_request.email,
         reset_password_request.token,
         reset_password_request.new_password,
     )

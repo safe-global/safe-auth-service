@@ -97,4 +97,6 @@ LOGGING_CONFIG = {
     },
 }
 
-logging.config.dictConfig(LOGGING_CONFIG)
+if not settings.TEST:
+    # Prevent JSON error logs when running tests
+    logging.config.dictConfig(LOGGING_CONFIG)

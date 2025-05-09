@@ -83,14 +83,12 @@ class TestApiKeyService(AsyncDbTestCase):
         new_password = passwordType(fake.password())
 
         with self.assertRaises(TemporaryTokenNotValid):
-            await user_service.reset_password(user.email, wrong_token, new_password)
+            await user_service.reset_password(wrong_token, new_password)
 
         self.assertFalse(
             user_service.verify_password(new_password, user.hashed_password)
         )
-        self.assertTrue(
-            await user_service.reset_password(user.email, right_token, new_password)
-        )
+        self.assertTrue(await user_service.reset_password(right_token, new_password))
         updated_user = await User.get_by_user_id(user.id)
         assert updated_user is not None
         self.assertTrue(
@@ -101,13 +99,26 @@ class TestApiKeyService(AsyncDbTestCase):
     async def test_register_user(self):
         self.assertEqual(await User.count(), 0)
         random_email_a = "random.1@safe.global"
-        random_password = passwordType(fake.password())
+        random_password_a = passwordType(fake.password())
         pre_register_token = self.user_service.pre_register_user(random_email_a)
-        registered_user_a_id = await self.user_service.register_user(
-            random_email_a, random_password, pre_register_token
+        registered_user_a = await self.user_service.register_user(
+            random_password_a, pre_register_token
         )
         self.assertEqual(await User.count(), 1)
-        apisix_consumer_group_a_name = f"{registered_user_a_id.hex}"
+        self.assertTrue(
+            self.user_service.verify_password(
+                random_password_a, registered_user_a.hashed_password
+            )
+        )
+        self.assertEqual(
+            User(
+                email=random_email_a,
+                id=registered_user_a.id,
+                hashed_password=registered_user_a.hashed_password,
+            ),
+            registered_user_a,
+        )
+        apisix_consumer_group_a_name = registered_user_a.id.hex
         apisix_consumer_group_a = await get_apisix_client().get_consumer_group(
             apisix_consumer_group_a_name
         )
@@ -115,13 +126,26 @@ class TestApiKeyService(AsyncDbTestCase):
         self.assertNotEqual(apisix_consumer_group_a.plugins, {})
 
         random_email_b = "random.2@safe.global"
-        random_password = passwordType(fake.password())
+        random_password_b = passwordType(fake.password())
         pre_register_token = self.user_service.pre_register_user(random_email_b)
-        registered_user_id_b = await self.user_service.register_user(
-            random_email_b, random_password, pre_register_token
+        registered_user_b = await self.user_service.register_user(
+            random_password_b, pre_register_token
         )
         self.assertEqual(await User.count(), 2)
-        apisix_consumer_group_b_name = f"{registered_user_id_b.hex}"
+        self.assertTrue(
+            self.user_service.verify_password(
+                random_password_b, registered_user_b.hashed_password
+            )
+        )
+        self.assertEqual(
+            User(
+                email=random_email_b,
+                id=registered_user_b.id,
+                hashed_password=registered_user_b.hashed_password,
+            ),
+            registered_user_b,
+        )
+        apisix_consumer_group_b_name = registered_user_b.id.hex
         apisix_consumer_group_b = await get_apisix_client().get_consumer_group(
             apisix_consumer_group_b_name
         )
