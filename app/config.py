@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     # Apisix Consumer Groups (Payment Plans) ---------------
     APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_MAX: int = 10
     APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_TIME_WINDOW_SECONDS: int = 1
+    APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT: int = 10
 
     # Datadog ---------------
     DATADOG_BASE_URL: str = "https://api.datadoghq.eu"

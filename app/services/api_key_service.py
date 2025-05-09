@@ -10,6 +10,14 @@ from ..models.api_key import ApiKeyPublic
 from ..services.jwt_service import JwtService
 
 
+class ApiKeyServiceException(Exception):
+    pass
+
+
+class ApiKeyCreationLimitReached(ApiKeyServiceException):
+    pass
+
+
 async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic:
     """
     Generate and store in database a new api key for a given user.
@@ -19,9 +27,19 @@ async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic
         user_id: unique user identifier.
         description: description of the api key.
 
+    Raises:
+        ApiKeyCreationLimitReached: If the user has reached the maximum number of allowed API keys.
+
     Returns: serialized ApiKeyPublic object.
 
     """
+    user_api_keys = await ApiKey.get_api_keys_by_user(user_id)
+    if (
+        len(user_api_keys)
+        >= settings.APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT
+    ):
+        raise ApiKeyCreationLimitReached("Api key creation limit reached")
+
     api_key_id = uuid.uuid4()
     api_key_subject = f"{user_id.hex}_{api_key_id.hex}"
     await get_apisix_client().upsert_consumer(
