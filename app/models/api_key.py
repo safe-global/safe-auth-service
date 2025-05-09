@@ -13,5 +13,5 @@ class ApiKeyPublic(BaseModel):
 
     id: uuid.UUID
     created: datetime.datetime
-    token: str
+    key: str
     description: str

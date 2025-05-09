@@ -28,6 +28,6 @@ async def generate_random_api_key(user_id: uuid.UUID):
     return await ApiKey(
         id=uuid.uuid4(),
         user_id=user_id,
-        token=fake.password(100),
+        key=fake.password(100),
         description="Api key for testing",
     ).create()
