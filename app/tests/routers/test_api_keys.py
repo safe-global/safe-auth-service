@@ -1,9 +1,8 @@
 import uuid
 from unittest import mock
 
-from fastapi.testclient import TestClient
-
 import faker
+from httpx import ASGITransport, AsyncClient
 
 from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.db.connector import db_session_context
@@ -19,35 +18,36 @@ from ..datasources.db.factory import generate_random_user
 fake = faker.Faker()
 
 
-class TestClientWithTearDown(TestClient):
-
-    def tearDown(self):
-        get_apisix_client.cache_clear()
-
-    def request(self, method, url, *args, **kwargs):
-        response = super().request(method, url, *args, **kwargs)
-        self.tearDown()
-        return response
-
-
 class TestApiKeys(AsyncDbTestCase):
-    client: TestClient
+    client: AsyncClient
 
     @db_session_context
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.client = TestClientWithTearDown(app)
         user_service = UserService()
-        user, password = await generate_random_user()
+        user, password = await self._generate_random_user_with_apisix_consumer_group()
         self.user = user
         self.token = await user_service.login_user(user.email, password)
+        self.client = AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        )
+
+    def setUp(self):
+        get_apisix_client.cache_clear()
+
+    def tearDown(self):
+        get_apisix_client.cache_clear()
+
+    async def _generate_random_user_with_apisix_consumer_group(self):
+        user, password = await generate_random_user()
+        await get_apisix_client().add_consumer_group(user.id.hex)
+        return user, password
 
     @db_session_context
     async def test_create_api_key(self):
-        response = self.client.post("/api/v1/api-keys")
+        response = await self.client.post("/api/v1/api-keys")
         self.assertEqual(response.status_code, 401)
-
-        response = self.client.post(
+        response = await self.client.post(
             "/api/v1/api-keys",
             headers={"Authorization": "Bearer " + self.token.access_token},
             json={"description": "Api key for testing"},
@@ -61,7 +61,7 @@ class TestApiKeys(AsyncDbTestCase):
         with mock.patch.object(
             settings, "APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT", 1
         ):
-            response = self.client.post(
+            response = await self.client.post(
                 "/api/v1/api-keys",
                 headers={"Authorization": "Bearer " + self.token.access_token},
                 json={"description": "Api key for testing"},
@@ -74,10 +74,10 @@ class TestApiKeys(AsyncDbTestCase):
     @db_session_context
     async def test_get_api_key(self):
         random_uuid = uuid.uuid4()
-        response = self.client.get(f"/api/v1/api-keys/{str(random_uuid)}")
+        response = await self.client.get(f"/api/v1/api-keys/{str(random_uuid)}")
         self.assertEqual(response.status_code, 401)
 
-        response = self.client.get(
+        response = await self.client.get(
             f"/api/v1/api-keys/{str(random_uuid)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -90,7 +90,7 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertEqual(len(api_keys), 1)
 
         api_key = api_keys[0]
-        response = self.client.get(
+        response = await self.client.get(
             f"/api/v1/api-keys/{str(api_key.id)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -104,12 +104,12 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertEqual(response.json().get("description"), api_key.description)
 
         # Can´t get api keys from other user
-        user, _ = await generate_random_user()
+        user, _ = await self._generate_random_user_with_apisix_consumer_group()
         other_api_key = await generate_api_key(
             user.id, description="Api key for testing"
         )
 
-        response = self.client.get(
+        response = await self.client.get(
             f"/api/v1/api-keys/{str(other_api_key.id)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -118,10 +118,10 @@ class TestApiKeys(AsyncDbTestCase):
     @db_session_context
     async def test_get_api_keys(self):
         random_uuid = uuid.uuid4()
-        response = self.client.get("/api/v1/api-keys")
+        response = await self.client.get("/api/v1/api-keys")
         self.assertEqual(response.status_code, 401)
 
-        response = self.client.get(
+        response = await self.client.get(
             "/api/v1/api-keys",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -135,7 +135,7 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertEqual(len(api_keys), 1)
 
         api_key = api_keys[0]
-        response = self.client.get(
+        response = await self.client.get(
             "/api/v1/api-keys",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -152,10 +152,10 @@ class TestApiKeys(AsyncDbTestCase):
     @db_session_context
     async def test_delete_api_key(self):
         random_uuid = uuid.uuid4()
-        response = self.client.delete(f"/api/v1/api-keys/{str(random_uuid)}")
+        response = await self.client.delete(f"/api/v1/api-keys/{str(random_uuid)}")
         self.assertEqual(response.status_code, 401)
 
-        response = self.client.delete(
+        response = await self.client.delete(
             f"/api/v1/api-keys/{str(random_uuid)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -168,13 +168,13 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertEqual(len(api_keys), 1)
 
         api_key = api_keys[0]
-        response = self.client.get(
+        response = await self.client.get(
             f"/api/v1/api-keys/{str(api_key.id)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.delete(
+        response = await self.client.delete(
             f"/api/v1/api-keys/{str(api_key.id)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )
@@ -183,12 +183,12 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertEqual(len(api_keys), 0)
 
         # Can´t delete api keys from other user
-        user, _ = await generate_random_user()
+        user, _ = await self._generate_random_user_with_apisix_consumer_group()
         other_api_key = await generate_api_key(
             user.id, description="Api key for testing"
         )
 
-        response = self.client.delete(
+        response = await self.client.delete(
             f"/api/v1/api-keys/{str(other_api_key.id)}",
             headers={"Authorization": "Bearer " + self.token.access_token},
         )

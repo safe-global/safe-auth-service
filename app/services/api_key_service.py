@@ -45,7 +45,7 @@ async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic
     await get_apisix_client().upsert_consumer(
         api_key_subject,
         description=description,
-        consumer_group_name=settings.APISIX_FREEMIUM_CONSUMER_GROUP_NAME,
+        consumer_group_name=user_id.hex,
     )
     access_token_expires = datetime.timedelta(days=settings.JWT_API_KEY_EXPIRE_DAYS)
     access_token = JwtService.create_access_token(
