@@ -14,13 +14,13 @@ class PreRegistrationUser(BaseModel):
     email: EmailStr
 
 
-class RegistrationUser(PreRegistrationUser):
-    token: str
-    password: passwordType
-
-
 class RegistrationUserResponse(PreRegistrationUser):
     uuid: uuid.UUID
+
+
+class RegistrationUser(BaseModel):
+    token: str
+    password: passwordType
 
 
 class ChangePasswordRequest(BaseModel):
@@ -33,6 +33,5 @@ class ForgotPasswordRequest(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    email: EmailStr
     token: str
     new_password: passwordType

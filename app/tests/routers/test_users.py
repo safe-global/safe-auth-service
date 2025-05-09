@@ -1,6 +1,8 @@
 import uuid
 from unittest import mock
 
+from pydantic import EmailStr
+
 import faker
 from httpx import ASGITransport, AsyncClient
 
@@ -15,6 +17,10 @@ from ...models.types import passwordType
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
 
 fake = faker.Faker()
+
+
+class ExampleRegistrationUser(RegistrationUser):
+    email: EmailStr
 
 
 class TestUsers(AsyncDbTestCase):
@@ -32,7 +38,7 @@ class TestUsers(AsyncDbTestCase):
         get_redis().flushall()
         get_apisix_client.cache_clear()
 
-    def get_example_registration_user(self) -> RegistrationUser:
+    def get_example_registration_user(self) -> ExampleRegistrationUser:
         """
         Returns:
             The same example user so tests can be reused
@@ -40,7 +46,7 @@ class TestUsers(AsyncDbTestCase):
         token = "random-token"
         password = passwordType("random-password")
         email = "testing@safe.global"
-        return RegistrationUser(token=token, password=password, email=email)
+        return ExampleRegistrationUser(token=token, password=password, email=email)
 
     async def test_pre_register(self):
         user = self.get_example_registration_user()
@@ -67,17 +73,19 @@ class TestUsers(AsyncDbTestCase):
     @db_session_context
     async def test_register(self):
         user = self.get_example_registration_user()
+        pre_register_payload = {
+            "email": user.email,
+        }
         payload = {
             "token": user.token,
             "password": user.password.get_secret_value(),
-            "email": user.email,
         }
 
         response = await self.client.post("/api/v1/users/registrations", json=payload)
 
         self.assertEqual(response.status_code, 422)
         self.assertEqual(
-            response.json(), {"detail": f"Temporary token not valid for {user.email}"}
+            response.json(), {"detail": f"Temporary token {user.token} not valid"}
         )
 
         count = await User.count()
@@ -87,7 +95,7 @@ class TestUsers(AsyncDbTestCase):
             "app.routers.users.send_register_temporary_token_email"
         ) as send_register_temporary_token_email_mock:
             response = await self.client.post(
-                "/api/v1/users/pre-registrations", json=payload
+                "/api/v1/users/pre-registrations", json=pre_register_payload
             )
             self.assertEqual(response.status_code, 204)
             send_register_temporary_token_email_mock.assert_called_once()
@@ -250,7 +258,6 @@ class TestUsers(AsyncDbTestCase):
 
         new_password = fake.password()
         reset_password_payload = {
-            "email": fake.email(),
             "token": str(uuid.uuid4()),
             "new_password": new_password,
         }
@@ -260,15 +267,8 @@ class TestUsers(AsyncDbTestCase):
         )
         self.assertEqual(response.status_code, 422)
 
-        # Set the right token but keep a wrong email
+        # Set the right token
         reset_password_payload["token"] = token
-        response = await self.client.post(
-            "/api/v1/users/reset-password", json=reset_password_payload
-        )
-        self.assertEqual(response.status_code, 422)
-
-        # Email and token are right
-        reset_password_payload["email"] = user.email
         response = await self.client.post(
             "/api/v1/users/reset-password", json=reset_password_payload
         )
