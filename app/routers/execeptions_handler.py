@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from ..services.api_key_service import ApiKeyCreationLimitReached
 from ..services.user_service import (
     TemporaryTokenExists,
     TemporaryTokenNotValid,
@@ -44,5 +45,14 @@ def register_exception_handlers(app: FastAPI):
     ):
         return JSONResponse(
             status_code=422,
+            content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(ApiKeyCreationLimitReached)
+    async def api_key_creation_limit_reached_exception_handler(
+        request: Request, exc: ApiKeyCreationLimitReached
+    ):
+        return JSONResponse(
+            status_code=403,
             content={"detail": str(exc)},
         )

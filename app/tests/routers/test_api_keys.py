@@ -1,4 +1,5 @@
 import uuid
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -8,6 +9,7 @@ from app.datasources.api_gateway.apisix.apisix_client import get_apisix_client
 from app.datasources.db.connector import db_session_context
 from app.main import app
 
+from ...config import settings
 from ...datasources.db.models import ApiKey
 from ...services.api_key_service import generate_api_key
 from ...services.user_service import UserService
@@ -55,6 +57,19 @@ class TestApiKeys(AsyncDbTestCase):
         self.assertIsNotNone(response.json().get("token"))
         self.assertIsNotNone(response.json().get("created"))
         self.assertIsNotNone(response.json().get("description"))
+
+        with mock.patch.object(
+            settings, "APISIX_FREEMIUM_CONSUMER_GROUP_API_KEY_CREATION_LIMIT", 1
+        ):
+            response = self.client.post(
+                "/api/v1/api-keys",
+                headers={"Authorization": "Bearer " + self.token.access_token},
+                json={"description": "Api key for testing"},
+            )
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.json(), {"detail": "Api key creation limit reached"}
+            )
 
     @db_session_context
     async def test_get_api_key(self):
