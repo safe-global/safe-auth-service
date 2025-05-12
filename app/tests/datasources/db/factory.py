@@ -3,7 +3,7 @@ from typing import Tuple
 
 import faker
 
-from app.datasources.db.models import ApiKey, User
+from app.datasources.db.models import ApiKey, User, Webhook
 from app.models.types import passwordType
 from app.services.user_service import UserService
 
@@ -30,4 +30,13 @@ async def generate_random_api_key(user_id: uuid.UUID):
         user_id=user_id,
         key=fake.password(100),
         description="Api key for testing",
+    ).create()
+
+
+async def generate_random_webhook(user_id: uuid.UUID):
+    return await Webhook(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        description="Webhook for testing",
+        external_webhook_id=uuid.uuid4(),
     ).create()

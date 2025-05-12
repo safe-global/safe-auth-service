@@ -74,6 +74,12 @@ class Settings(BaseSettings):
     # URLS
     FRONTEND_BASE_URL: str = ""
 
+    # Event Service ---------------
+    EVENTS_SERVICE_BASE_URL: str = ""
+    EVENTS_SERVICE_API_KEY: str = ""
+    EVENTS_SERVICE_CONNECTIONS_POOL_SIZE: int = 100
+    EVENTS_SERVICE_WEBHOOKS_CREATION_LIMIT: int = 10
+
 
 settings = Settings()
 

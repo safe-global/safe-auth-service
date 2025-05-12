@@ -1,0 +1,2 @@
+class EventsServiceRequestError(Exception):
+    pass

@@ -3,10 +3,14 @@ import uuid
 import faker
 
 from app.datasources.db.connector import db_session_context
-from app.datasources.db.models import ApiKey, User
+from app.datasources.db.models import ApiKey, User, Webhook
 
 from .async_db_test_case import AsyncDbTestCase
-from .factory import generate_random_api_key, generate_random_user
+from .factory import (
+    generate_random_api_key,
+    generate_random_user,
+    generate_random_webhook,
+)
 
 fake = faker.Faker()
 
@@ -90,3 +94,58 @@ class TestModel(AsyncDbTestCase):
         result = await ApiKey.get_api_keys_by_user(user.id)
         self.assertEqual(len(result), len(api_keys))
         self.assertEqual(result, api_keys)
+
+    @db_session_context
+    async def test_webhook(self):
+        user, _ = await generate_random_user()
+        webhook = await generate_random_webhook(user.id)
+        await webhook.create()
+        result = await webhook.get_all()
+        self.assertEqual(result[0], webhook)
+
+    @db_session_context
+    async def test_get_webhook_by_ids(self):
+        user, _ = await generate_random_user()
+        wrong_user, _ = await generate_random_user()
+        webhook = await generate_random_webhook(user.id)
+        webhook_other = await generate_random_webhook(user.id)
+
+        result = await Webhook.get_by_ids(webhook.id, wrong_user.id)
+        self.assertIsNone(result)
+
+        result = await Webhook.get_by_ids(webhook.id, user.id)
+        self.assertEqual(result, webhook)
+
+        result = await Webhook.get_by_ids(webhook_other.id, user.id)
+        self.assertEqual(result, webhook_other)
+
+    @db_session_context
+    async def test_delete_webhook_by_ids(self):
+        user, _ = await generate_random_user()
+        webhook = await generate_random_webhook(user.id)
+        webhook_other = await generate_random_webhook(user.id)
+
+        result = await Webhook.delete_by_ids(webhook.id, uuid.uuid4())
+        self.assertFalse(result)
+
+        result = await Webhook.delete_by_ids(webhook.id, user.id)
+        self.assertTrue(result)
+
+        result = await Webhook.get_by_ids(webhook.id, user.id)
+        self.assertIsNone(result)
+
+        result = await Webhook.get_by_ids(webhook_other.id, user.id)
+        self.assertEqual(result, webhook_other)
+
+    @db_session_context
+    async def test_get_webhooks_by_user(self):
+        user, _ = await generate_random_user()
+
+        result = await Webhook.get_webhooks_by_user(user.id)
+        self.assertEqual(result, [])
+
+        webhooks = [await generate_random_webhook(user.id) for _ in range(5)]
+
+        result = await Webhook.get_webhooks_by_user(user.id)
+        self.assertEqual(len(result), len(webhooks))
+        self.assertEqual(result, webhooks)
