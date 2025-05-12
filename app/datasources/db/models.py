@@ -99,7 +99,7 @@ class User(SqlQueryBase, SQLModel, table=True):
 class ApiKey(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
     id: uuid.UUID = Field(primary_key=True)
     user_id: uuid.UUID = Field(nullable=False, foreign_key="user.id")
-    token: str = Field(nullable=False, unique=True)
+    key: str = Field(nullable=False, unique=True)
     description: str = Field(nullable=False, max_length=200)
 
     @classmethod

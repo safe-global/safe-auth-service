@@ -47,12 +47,12 @@ async def generate_api_key(user_id: uuid.UUID, description: str) -> ApiKeyPublic
         description=description,
         consumer_group_name=user_id.hex,
     )
-    access_token_expires = datetime.timedelta(days=settings.JWT_API_KEY_EXPIRE_DAYS)
-    access_token = JwtService.create_access_token(
-        api_key_subject, access_token_expires, settings.JWT_AUDIENCE, {}
+    access_key_expires = datetime.timedelta(days=settings.JWT_API_KEY_EXPIRE_DAYS)
+    access_key = JwtService.create_access_token(
+        api_key_subject, access_key_expires, settings.JWT_AUDIENCE, {}
     )
     api_key = ApiKey(
-        id=api_key_id, user_id=user_id, token=access_token, description=description
+        id=api_key_id, user_id=user_id, key=access_key, description=description
     )
     await api_key.create()
     return ApiKeyPublic.model_validate(api_key)
