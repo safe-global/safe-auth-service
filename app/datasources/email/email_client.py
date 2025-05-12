@@ -1,6 +1,9 @@
 import logging
 import smtplib
-from email.message import EmailMessage
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from functools import cache
 
 from ...config import settings
 from .templates.register import (
@@ -13,6 +16,12 @@ from .templates.reset_password import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@cache
+def _get_safe_mail_logo() -> MIMEImage:
+    with open("static/safe_logo.png", "rb") as safe_logo_img:
+        return MIMEImage(safe_logo_img.read())
 
 
 def send_email(to: str, subject: str, html_content: str, text_content: str) -> bool:
@@ -28,13 +37,21 @@ def send_email(to: str, subject: str, html_content: str, text_content: str) -> b
     Returns:
         `True` if the email was sent, `False` otherwise
     """
-    msg = EmailMessage()
-    msg.set_content(html_content, subtype="html")
-    msg.add_alternative(text_content, subtype="plain")
 
-    msg["Subject"] = subject
-    msg["From"] = settings.SMTP_FROM_ADDRESS
-    msg["To"] = to
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = settings.SMTP_FROM_ADDRESS
+    message["To"] = to
+
+    part1 = MIMEText(text_content, "plain")
+    part2 = MIMEText(html_content, "html")
+    message.attach(part1)
+    message.attach(part2)
+
+    imagen_mime = _get_safe_mail_logo()
+    imagen_mime.add_header("Content-ID", "<safe-logo-img>")
+    imagen_mime.add_header("Content-Disposition", "inline", filename="safe_logo.png")
+    message.attach(imagen_mime)
 
     try:
         with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as smtp_client:
@@ -42,7 +59,7 @@ def send_email(to: str, subject: str, html_content: str, text_content: str) -> b
                 smtp_client.starttls()
             if settings.SMTP_USERNAME:
                 smtp_client.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-            smtp_client.send_message(msg)
+            smtp_client.send_message(message)
             return True
     except (smtplib.SMTPException, IOError) as e:
         logger.exception("Problem while sending email", exc_info=e)
