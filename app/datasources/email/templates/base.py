@@ -41,7 +41,7 @@ def get_mail_base_html_template(mail_body: str) -> str:
                     display: inline-block;
                     padding: 10px 20px;
                     background-color: #121312;
-                    color: white;
+                    color: white !important;
                     text-decoration: none;
                     border-radius: 5px;
                     margin-top: 20px;

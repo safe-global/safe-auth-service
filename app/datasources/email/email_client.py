@@ -3,6 +3,7 @@ import smtplib
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from functools import cache
 
 from ...config import settings
 from .templates.register import (
@@ -15,6 +16,12 @@ from .templates.reset_password import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@cache
+def _get_safe_mail_logo() -> MIMEImage:
+    with open("static/safe_logo.png", "rb") as safe_logo_img:
+        return MIMEImage(safe_logo_img.read())
 
 
 def send_email(to: str, subject: str, html_content: str, text_content: str) -> bool:
@@ -41,13 +48,10 @@ def send_email(to: str, subject: str, html_content: str, text_content: str) -> b
     message.attach(part1)
     message.attach(part2)
 
-    with open("static/safe_logo.png", "rb") as safe_logo_img:
-        imagen_mime = MIMEImage(safe_logo_img.read())
-        imagen_mime.add_header("Content-ID", "<safe-logo-img>")
-        imagen_mime.add_header(
-            "Content-Disposition", "inline", filename="safe_logo.png"
-        )
-        message.attach(imagen_mime)
+    imagen_mime = _get_safe_mail_logo()
+    imagen_mime.add_header("Content-ID", "<safe-logo-img>")
+    imagen_mime.add_header("Content-Disposition", "inline", filename="safe_logo.png")
+    message.attach(imagen_mime)
 
     try:
         with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as smtp_client:
