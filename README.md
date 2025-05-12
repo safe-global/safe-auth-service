@@ -6,11 +6,11 @@
 
 
 # Safe Auth Service
-Grants JWT tokens to be used across the Safe Core{API} infrastructure. It supports ERC-4361 authentication.
+Grants JWT tokens to be used across the Safe Core{API} infrastructure.
 
 ## Configuration
 ```bash
-cp .env.sample .env
+cp .env.docker .env
 ```
 
 ## Execution
@@ -35,7 +35,7 @@ Then enter the virtualenv and install the dependencies:
 source venv/bin/activate
 pip install -r requirements.txt
 pre-commit install -f
-cp .env.sample .env
+cp .env.docker .env
 ```
 
 ### Handle migrations
