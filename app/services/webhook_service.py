@@ -10,16 +10,35 @@ from ..models.webhook import WebhookEventsService, WebhookPublicPublic, WebhookR
 
 
 class WebhookServiceException(Exception):
+    """
+    Base exception for errors related to the webhook service.
+    """
+
     pass
 
 
 class WebhookCreationLimitReached(WebhookServiceException):
+    """
+    Exception raised when the webhook creation limit is reached for a user.
+    """
+
     pass
 
 
 def _parse_webhook_public(
     model_webhook: Webhook, events_service_webhook: WebhookEventsService
 ) -> WebhookPublicPublic:
+    """
+    Converts a database model webhook and its corresponding event service webhook
+    to a WebhookPublicPublic object for use in public API responses.
+
+    Args:
+        model_webhook: The webhook stored in the database.
+        events_service_webhook: The webhook from the event service.
+
+    Returns:
+        WebhookPublicPublic: The WebhookPublicPublic object representing the webhook for the public response.
+    """
     return WebhookPublicPublic(
         id=model_webhook.id,
         created=model_webhook.created,
@@ -36,6 +55,20 @@ def _parse_webhook_public(
 async def generate_webhook(
     user_id: uuid.UUID, webhook_request_info: WebhookRequest
 ) -> WebhookPublicPublic:
+    """
+    Generates a new webhook for a user, adding it to the event service and creating
+    a corresponding entry in the database.
+
+    Args:
+        user_id: The ID of the user for whom the webhook is being generated.
+        webhook_request_info: The webhook request data including URL, events, etc.
+
+    Returns:
+        WebhookPublicPublic: The generated webhook as a WebhookPublicPublic object.
+
+    Raises:
+        WebhookCreationLimitReached: If the user has reached the webhook creation limit.
+    """
     user_webhooks = await Webhook.get_webhooks_by_user(user_id)
 
     if len(user_webhooks) >= settings.EVENTS_SERVICE_WEBHOOKS_CREATION_LIMIT:
@@ -63,6 +96,20 @@ async def generate_webhook(
 async def update_webhook_by_ids(
     webhook_id: uuid.UUID, user_id: uuid.UUID, webhook_request_info: WebhookRequest
 ) -> bool:
+    """
+    Updates an existing webhook in both the database and the event service using the provided IDs.
+
+    Args:
+        webhook_id: The ID of the webhook to update.
+        user_id: The ID of the user who owns the webhook.
+        webhook_request_info: The new webhook data to update.
+
+    Returns:
+        bool: True if the webhook was successfully updated, False if the webhook was not found.
+
+    Raises:
+        WebhookServiceException: If an error occurs during the update.
+    """
     stored_webhook = await Webhook.get_by_ids(webhook_id, user_id)
 
     if not stored_webhook:
@@ -82,6 +129,15 @@ async def update_webhook_by_ids(
 
 
 async def get_webhooks_by_user(user_id: uuid.UUID) -> list["WebhookPublicPublic"]:
+    """
+    Retrieves all webhooks associated with a user from both the database and the event service.
+
+    Args:
+        user_id: The ID of the user whose webhooks are being retrieved.
+
+    Returns:
+        list[WebhookPublicPublic]: A list of WebhookPublicPublic objects representing the user's webhooks.
+    """
     db_webhooks = await Webhook.get_webhooks_by_user(user_id)
     retrieve_events_service_webhooks_tasks = [
         get_events_service_client().get_webhook(webhook.external_webhook_id)
@@ -99,6 +155,16 @@ async def get_webhooks_by_user(user_id: uuid.UUID) -> list["WebhookPublicPublic"
 async def get_webhook_by_ids(
     webhook_id: uuid.UUID, user_id: uuid.UUID
 ) -> WebhookPublicPublic | None:
+    """
+    Retrieves a specific webhook for a user from both the database and the event service.
+
+    Args:
+        webhook_id: The ID of the webhook to retrieve.
+        user_id: The ID of the user who owns the webhook.
+
+    Returns:
+        WebhookPublicPublic | None: The corresponding webhook, or None if not found.
+    """
     if (webhook := await Webhook.get_by_ids(webhook_id, user_id)) is not None:
         events_service_webhook = await get_events_service_client().get_webhook(
             webhook.external_webhook_id
@@ -108,6 +174,16 @@ async def get_webhook_by_ids(
 
 
 async def delete_webhook_by_id(webhook_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    """
+    Deletes a webhook from both the database and the event service using the provided IDs.
+
+    Args:
+        webhook_id: The ID of the webhook to delete.
+        user_id: The ID of the user who owns the webhook.
+
+    Returns:
+        bool: True if the webhook was successfully deleted, False if the webhook was not found.
+    """
     stored_webhook = await Webhook.get_by_ids(webhook_id, user_id)
     if not stored_webhook:
         return False
