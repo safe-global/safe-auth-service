@@ -17,13 +17,26 @@ class WebhookEventType(str, Enum):
     SEND_DELEGATES = "SEND_DELEGATES"
 
 
+class WebhookEventOption(BaseModel):
+    name: str
+
+
+class WebhookEventsService(BaseModel):
+    id: uuid.UUID
+    url: str
+    authorization: str | None
+    chains: list[int]
+    events: list[WebhookEventType]
+    active: bool
+
+
 class WebhookRequest(BaseModel):
     description: str | None = Field(default=None, max_length=200)
     url: str = Field(max_length=300)
     authorization: str | None = Field(default=None)
     chains: list[int] = Field(min_length=0)
     events: list[WebhookEventType]
-    active: bool | None = Field(default=True)
+    active: bool = Field(default=True)
 
 
 class WebhookPublicPublic(BaseModel):

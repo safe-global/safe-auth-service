@@ -5,7 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from starlette import status
 
-from ..models.webhook import WebhookPublicPublic, WebhookRequest
+from ..models.webhook import (
+    WebhookEventOption,
+    WebhookEventType,
+    WebhookPublicPublic,
+    WebhookRequest,
+)
 from ..services.webhook_service import (
     delete_webhook_by_id,
     generate_webhook,
@@ -21,9 +26,21 @@ router = APIRouter(
 )
 
 
+@router.get("/events", response_model=list[WebhookEventOption])
+async def get_webhook_events(
+    jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
+):
+    """
+    List all event options for a webhook.
+
+    Returns: List of webhook event options.
+
+    """
+    return [WebhookEventOption(name=event.value) for event in WebhookEventType]
+
+
 @router.post(
-    "",
-    status_code=status.HTTP_201_CREATED,
+    "", status_code=status.HTTP_201_CREATED, response_model=WebhookPublicPublic
 )
 async def create_webhook(
     webhook_info: WebhookRequest,
@@ -45,7 +62,10 @@ async def create_webhook(
     )
 
 
-@router.put("/{webhook_id}", response_model=WebhookPublicPublic)
+@router.put(
+    "/{webhook_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def update_webhook(
     webhook_id: uuid.UUID,
     webhook_info: WebhookRequest,
@@ -99,7 +119,7 @@ async def get_webhooks(
 
     """
     user_id = get_user_id_from_jwt(jwt_info)
-    return get_webhooks_by_user(user_id)
+    return await get_webhooks_by_user(user_id)
 
 
 @router.delete(

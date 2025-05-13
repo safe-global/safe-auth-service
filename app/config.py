@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     EVENTS_SERVICE_BASE_URL: str = ""
     EVENTS_SERVICE_API_KEY: str = ""
     EVENTS_SERVICE_CONNECTIONS_POOL_SIZE: int = 100
-    EVENTS_SERVICE_WEBHOOKS_CREATION_LIMIT: int = 10
+    EVENTS_SERVICE_WEBHOOKS_CREATION_LIMIT: int = 5
 
 
 settings = Settings()

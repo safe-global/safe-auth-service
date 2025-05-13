@@ -1,4 +1,5 @@
 import logging
+import uuid
 from functools import cache
 from typing import Any, Callable
 
@@ -6,6 +7,7 @@ import aiohttp
 from safe_eth.util.http import build_full_url
 
 from ....config import settings
+from ....models.webhook import WebhookEventsService, WebhookEventType
 from .exceptions import EventsServiceRequestError
 
 logger = logging.getLogger(__name__)
@@ -130,23 +132,23 @@ class EventsServiceClient:
         """
         return await self._do_request(url, self.async_session.put, payload)
 
-    async def _patch_request(
+    async def _post_request(
         self, url: str, payload: dict[str, Any]
     ) -> aiohttp.ClientResponse:
         """
-        Sends a PATCH request.
+        Sends a POST request.
 
         Args:
-            url: The URL to send the PATCH request to.
-            payload: The data to be sent in the PATCH request.
+            url: The URL to send the POST request to.
+            payload: The data to be sent in the POST request.
 
         Returns:
-            The response object from the PATCH request.
+            The response object from the POST request.
 
         Raises:
             EventsServiceRequestError: If there is an error with the request.
         """
-        return await self._do_request(url, self.async_session.patch, payload)
+        return await self._do_request(url, self.async_session.post, payload)
 
     async def _delete_request(self, url: str) -> aiohttp.ClientResponse:
         """
@@ -162,3 +164,142 @@ class EventsServiceClient:
             EventsServiceRequestError: If there is an error with the request.
         """
         return await self._do_request(url, self.async_session.delete)
+
+    def _parse_webhook_data(self, webhook_data: dict) -> WebhookEventsService:
+        """
+        Parses the webhook data received from the API response and converts it into a WebhookEventsService object.
+
+        Args:
+            webhook_data: The raw data of the webhook returned from the API.
+
+        Returns:
+            WebhookEventsService | None: The parsed WebhookEventsService object or None if the data is invalid.
+        """
+        return WebhookEventsService(
+            id=webhook_data["id"],
+            url=webhook_data["url"],
+            authorization=webhook_data["authorization"],
+            chains=webhook_data["chains"],
+            events=[WebhookEventType(event) for event in webhook_data["events"]],
+            active=webhook_data["active"],
+        )
+
+    async def add_webhook(
+        self,
+        webhook_url: str,
+        chains: list[int],
+        events: list[WebhookEventType],
+        active: bool = True,
+        authorization: str | None = None,
+        description: str | None = None,
+    ) -> WebhookEventsService:
+        """
+        Adds a new webhook to the events service.
+
+        Args:
+            webhook_url: The URL to send webhook events to.
+            chains: The list of chain IDs associated with the webhook.
+            events: The list of events that trigger the webhook.
+            active: Whether the webhook is active (default is True).
+            authorization: An optional authorization token for the webhook.
+            description: An optional description for the webhook.
+
+        Returns:
+            WebhookEventsService | None: The webhook object if the webhook was successfully added, None otherwise.
+
+        Raises:
+            ApiGatewayRequestError: If there is an error while adding the webhook (e.g., HTTP error, invalid response).
+        """
+        data: dict[str, Any] = {
+            "url": webhook_url,
+            "chains": chains,
+            "events": [event.value for event in events],
+            "active": active,
+        }
+
+        if authorization:
+            data["authorization"] = authorization
+
+        if description:
+            data["description"] = description
+
+        response = await self._post_request("/api/v1/webhooks", data)
+        webhook_data = await response.json()
+        return self._parse_webhook_data(webhook_data)
+
+    async def delete_webhook(
+        self,
+        webhook_id: uuid.UUID,
+    ) -> bool:
+        """
+        Deletes an existing webhook by its ID.
+
+        Args:
+            webhook_id: The UUID of the webhook to delete.
+
+        Returns:
+            bool: True if the webhook was successfully deleted, False otherwise.
+
+                Raises:
+            ApiGatewayRequestError: If there is an error while deleting the webhook (e.g., HTTP error, invalid response).
+        """
+        url = f"/api/v1/webhooks/{webhook_id}"
+        response = await self._delete_request(url)
+        return response.ok
+
+    async def update_webhook(
+        self,
+        webhook_id: uuid.UUID,
+        webhook_url: str,
+        chains: list[int],
+        events: list[WebhookEventType],
+        active: bool = True,
+        authorization: str | None = None,
+    ) -> bool:
+        """
+        Updates an existing webhook with new information.
+
+        Args:
+            webhook_id: The UUID of the webhook to update.
+            webhook_url: The new URL for the webhook.
+            chains: The updated list of chain IDs associated with the webhook.
+            events: The updated list of events that trigger the webhook.
+            active: Whether the webhook is active (default is True).
+            authorization: An optional new authorization token for the webhook.
+
+        Returns:
+            bool: True if the webhook was successfully updated, False otherwise.
+
+                        Raises:
+            ApiGatewayRequestError: If there is an error while updating the webhook (e.g., HTTP error, invalid response).
+        """
+
+        data: dict[str, Any] = {
+            "url": webhook_url,
+            "chains": chains,
+            "events": [event.value for event in events],
+            "active": active,
+        }
+
+        if authorization:
+            data["authorization"] = authorization
+
+        response = await self._post_request(f"/api/v1/webhooks/{webhook_id}", data)
+        return response.ok
+
+    async def get_webhook(self, webhook_id: uuid.UUID) -> WebhookEventsService:
+        """
+        Retrieves a webhook by its ID.
+
+        Args:
+            webhook_id: The UUID of the webhook to retrieve.
+
+        Returns:
+            WebhookEventsService | None: The webhook object if found, None if not found.
+
+                        Raises:
+            ApiGatewayRequestError: If there is an error while retrieving the webhook (e.g., HTTP error, invalid response).
+        """
+        response = await self._get_request(f"/api/v1/webhooks/{webhook_id}")
+        webhook_data = await response.json()
+        return self._parse_webhook_data(webhook_data)
