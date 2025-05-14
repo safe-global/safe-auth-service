@@ -19,10 +19,14 @@ class Settings(BaseSettings):
     )
     TEST: bool = False
     LOG_LEVEL: str = "INFO"
+    ORIGINS: list[str] = []
+    # Redis
     REDIS_URL: str = "redis://"
+    # Database
     DATABASE_URL: str = "psql://postgres:"
     DATABASE_POOL_CLASS: str = "AsyncAdaptedQueuePool"
     DATABASE_POOL_SIZE: int = 10
+    # Register
     PRE_REGISTRATION_TOKEN_TTL_SECONDS: int = 60 * 10  # 10 minutes
 
     # Email -----------------

@@ -2,11 +2,13 @@ import datetime
 import logging
 
 from fastapi import APIRouter, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from starlette.requests import Request
 from starlette.responses import Response
 
 from . import VERSION
+from .config import settings
 from .datasources.db.connector import (
     _get_database_session_context,
     db_session,
@@ -65,6 +67,16 @@ api_v1_router.include_router(users.router)
 api_v1_router.include_router(webhooks.router)
 app.include_router(api_v1_router)
 app.include_router(default.router)
+
+# Middlewares
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.middleware("http")

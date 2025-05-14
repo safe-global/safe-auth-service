@@ -1,15 +1,4 @@
-import base64
-from functools import cache
-
-
-@cache
-def _get_safe_logo_base64() -> str:
-    with open("static/safe_logo.png", "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
-
-
 def get_mail_base_html_template(mail_body: str) -> str:
-    safe_logo_base64 = _get_safe_logo_base64()
 
     return f"""
     <!DOCTYPE html>
@@ -52,7 +41,7 @@ def get_mail_base_html_template(mail_body: str) -> str:
                     display: inline-block;
                     padding: 10px 20px;
                     background-color: #121312;
-                    color: white;
+                    color: white !important;
                     text-decoration: none;
                     border-radius: 5px;
                     margin-top: 20px;
@@ -61,7 +50,7 @@ def get_mail_base_html_template(mail_body: str) -> str:
         </head>
         <body>
             <div class="container">
-                <img src="data:image/png;base64,{safe_logo_base64}" alt="Safe Dashboard Logo" class="logo">
+                <img src="cid:safe-logo-img" alt="Safe Dashboard Logo" class="logo">
                 {mail_body}
             </div>
         </body>
