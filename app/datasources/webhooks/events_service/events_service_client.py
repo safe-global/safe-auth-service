@@ -75,7 +75,7 @@ class EventsServiceClient:
 
         headers = {}
         if self.api_key:
-            headers["X-API-KEY"] = self.api_key  # TODO UPDATE THIS
+            headers["Authorization"] = f"Basic {self.api_key}"
         if payload:
             headers["Content-Type"] = "application/json"
 
