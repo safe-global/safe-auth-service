@@ -96,11 +96,13 @@ async def http_request_middleware(request: Request, call_next):
         Exception
     """
     start_time = datetime.datetime.now(datetime.timezone.utc)
+    exception_occurred = False
     with set_database_session_context():
         response: Response | None = None
         try:
             response = await call_next(request)
         except Exception as e:
+            exception_occurred = True
             raise e
         finally:
             await db_session.remove()
@@ -121,13 +123,23 @@ async def http_request_middleware(request: Request, call_next):
                     endTime=end_time,
                     totalTime=int(total_time),
                 )
-                logger.info(
-                    "Http request",
-                    extra={
-                        "http_response": http_response.model_dump(),
-                        "http_request": http_request.model_dump(),
-                    },
-                )
+                if exception_occurred:
+                    logger.error(
+                        "Http request",
+                        extra={
+                            "http_response": http_response.model_dump(),
+                            "http_request": http_request.model_dump(),
+                        },
+                        exc_info=True,
+                    )
+                else:
+                    logger.info(
+                        "Http request",
+                        extra={
+                            "http_response": http_response.model_dump(),
+                            "http_request": http_request.model_dump(),
+                        },
+                    )
             except ValueError as e:
                 logger.error(f"Validation log error {e}")
 
