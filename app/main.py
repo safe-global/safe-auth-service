@@ -16,7 +16,7 @@ from .datasources.db.connector import (
 )
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
 from .routers import about, api_keys, default, google, users
-from .routers.execeptions_handler import register_exception_handlers
+from .routers.exceptions_handler import register_exception_handlers
 
 logger = logging.getLogger()
 
