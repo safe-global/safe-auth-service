@@ -1,6 +1,8 @@
 import uuid
 from unittest import mock
 
+from pydantic import HttpUrl
+
 import faker
 
 from ...config import settings
@@ -51,7 +53,7 @@ class TestWebhookService(AsyncDbTestCase):
 
         create_webhook_request = WebhookRequest(
             description="Test webhook",
-            url="http://example.com",
+            url=HttpUrl("http://example.com"),
             authorization="some-authorization",
             chains=[1, 2],
             events=[
@@ -82,7 +84,7 @@ class TestWebhookService(AsyncDbTestCase):
         )
         self.assertTrue(generated_webhook.is_active)
         mock_add_webhook.assert_called_once_with(
-            webhook_url="http://example.com",
+            webhook_url="http://example.com/",
             chains=[1, 2],
             events=["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"],
             is_active=True,
@@ -126,7 +128,7 @@ class TestWebhookService(AsyncDbTestCase):
 
         updated_webhook_request = WebhookRequest(
             description="Updated webhook description",
-            url="http://new-url.com",
+            url=HttpUrl("http://new-url.com"),
             authorization="new-authorization",
             chains=[3, 4],
             events=[WebhookEventType.SEND_CONFIRMATIONS],
@@ -150,12 +152,13 @@ class TestWebhookService(AsyncDbTestCase):
         )
         self.assertTrue(success)
         mock_update_webhook.assert_called_once_with(
-            webhook_id=generated_webhook.id,
-            webhook_url="http://new-url.com",
+            webhook_id=generated_webhook.external_webhook_id,
+            webhook_url="http://new-url.com/",
             chains=[3, 4],
             events=["SEND_CONFIRMATIONS"],
             is_active=False,
             authorization="new-authorization",
+            description=f"Auth Service: user {user.id} webhook {generated_webhook.id}",
         )
         updated_webhook = await Webhook.get_by_ids(generated_webhook.id, user.id)
         self.assertIsNotNone(updated_webhook)

@@ -2,7 +2,7 @@ import datetime
 import uuid
 from enum import Enum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class WebhookEventType(str, Enum):
@@ -32,11 +32,15 @@ class WebhookEventsService(BaseModel):
 
 class WebhookRequest(BaseModel):
     description: str | None = Field(default=None, max_length=200)
-    url: str = Field(max_length=300)
+    url: HttpUrl = Field(max_length=300)
     authorization: str | None = Field(default=None)
     chains: list[int] = Field(min_length=0)
     events: list[WebhookEventType]
     is_active: bool = Field(default=True)
+
+    @property
+    def url_str(self) -> str:
+        return str(self.url)
 
 
 class WebhookPublicPublic(BaseModel):

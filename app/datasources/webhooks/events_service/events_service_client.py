@@ -178,7 +178,7 @@ class EventsServiceClient:
         return WebhookEventsService(
             id=webhook_data["id"],
             url=webhook_data["url"],
-            authorization=webhook_data["authorization"],
+            authorization=webhook_data["authorization"] or None,
             chains=webhook_data["chains"],
             events=[WebhookEventType(event) for event in webhook_data["events"]],
             is_active=webhook_data["isActive"],
@@ -189,9 +189,9 @@ class EventsServiceClient:
         webhook_url: str,
         chains: list[int],
         events: list[WebhookEventType],
+        description: str,
         is_active: bool = True,
         authorization: str | None = None,
-        description: str | None = None,
     ) -> WebhookEventsService:
         """
         Adds a new webhook to the events service.
@@ -200,9 +200,9 @@ class EventsServiceClient:
             webhook_url: The URL to send webhook events to.
             chains: The list of chain IDs associated with the webhook.
             events: The list of events that trigger the webhook.
+            description: An optional description for the webhook.
             is_active: Whether the webhook is active (default is True).
             authorization: An optional authorization token for the webhook.
-            description: An optional description for the webhook.
 
         Returns:
             WebhookEventsService: The webhook object if the webhook was successfully added.
@@ -215,15 +215,11 @@ class EventsServiceClient:
             "chains": chains,
             "events": [event.value for event in events],
             "isActive": is_active,
+            "description": description,
+            "authorization": authorization if authorization else "",
         }
 
-        if authorization:
-            data["authorization"] = authorization
-
-        if description:
-            data["description"] = description
-
-        response = await self._post_request("/api/v1/webhooks", data)
+        response = await self._post_request("/webhooks", data)
         webhook_data = await response.json()
         return self._parse_webhook_data(webhook_data)
 
@@ -243,7 +239,7 @@ class EventsServiceClient:
         Raises:
             ApiGatewayRequestError: If there is an error while deleting the webhook (e.g., HTTP error, invalid response).
         """
-        url = f"/api/v1/webhooks/{webhook_id}"
+        url = f"/webhooks/{webhook_id}"
         response = await self._delete_request(url)
         return response.ok
 
@@ -253,6 +249,7 @@ class EventsServiceClient:
         webhook_url: str,
         chains: list[int],
         events: list[WebhookEventType],
+        description: str,
         is_active: bool = True,
         authorization: str | None = None,
     ) -> bool:
@@ -264,6 +261,7 @@ class EventsServiceClient:
             webhook_url: The new URL for the webhook.
             chains: The updated list of chain IDs associated with the webhook.
             events: The updated list of events that trigger the webhook.
+            description: An optional description for the webhook.
             is_active: Whether the webhook is active (default is True).
             authorization: An optional new authorization token for the webhook.
 
@@ -279,12 +277,11 @@ class EventsServiceClient:
             "chains": chains,
             "events": [event.value for event in events],
             "isActive": is_active,
+            "description": description,
+            "authorization": authorization if authorization else "",
         }
 
-        if authorization:
-            data["authorization"] = authorization
-
-        response = await self._put_request(f"/api/v1/webhooks/{webhook_id}", data)
+        response = await self._put_request(f"/webhooks/{webhook_id}", data)
         return response.ok
 
     async def get_webhook(self, webhook_id: uuid.UUID) -> WebhookEventsService:
@@ -300,6 +297,6 @@ class EventsServiceClient:
         Raises:
             ApiGatewayRequestError: If there is an error while retrieving the webhook (e.g., HTTP error, invalid response).
         """
-        response = await self._get_request(f"/api/v1/webhooks/{webhook_id}")
+        response = await self._get_request(f"/webhooks/{webhook_id}")
         webhook_data = await response.json()
         return self._parse_webhook_data(webhook_data)

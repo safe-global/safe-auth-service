@@ -2,6 +2,8 @@ import datetime
 import uuid
 from unittest import mock
 
+from pydantic import HttpUrl
+
 from httpx import ASGITransport, AsyncClient
 
 from ...datasources.db.connector import db_session_context
@@ -105,11 +107,11 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
 
         self.assertEqual(response.status_code, 204)
         mock_update_webhook.assert_called_once_with(
-            self.user.id,
             webhook_id,
+            self.user.id,
             WebhookRequest(
                 description="Updated webhook description",
-                url="http://new-url.com",
+                url=HttpUrl("http://new-url.com"),
                 authorization="new-authorization",
                 chains=[3, 4],
                 events=[WebhookEventType.SEND_CONFIRMATIONS],

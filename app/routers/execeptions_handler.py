@@ -9,6 +9,7 @@ from ..services.user_service import (
     TemporaryTokenNotValid,
     WrongPassword,
 )
+from ..services.webhook_service import WebhookCreationLimitReached
 from .auth import UserFromJWTDoesNotExist
 
 
@@ -51,6 +52,15 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(ApiKeyCreationLimitReached)
     async def api_key_creation_limit_reached_exception_handler(
         request: Request, exc: ApiKeyCreationLimitReached
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={"detail": str(exc)},
+        )
+
+    @app.exception_handler(WebhookCreationLimitReached)
+    async def webhook_creation_limit_reached_exception_handler(
+        request: Request, exc: WebhookCreationLimitReached
     ):
         return JSONResponse(
             status_code=403,

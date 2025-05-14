@@ -82,7 +82,7 @@ async def update_webhook(
 
     """
     user_id = get_user_id_from_jwt(jwt_info)
-    if await update_webhook_by_ids(user_id, webhook_id, webhook_info) is False:
+    if await update_webhook_by_ids(webhook_id, user_id, webhook_info) is False:
         raise HTTPException(status_code=404)
 
     return None  # No content response

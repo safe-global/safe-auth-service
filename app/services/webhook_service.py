@@ -52,6 +52,10 @@ def _parse_webhook_public(
     )
 
 
+def _get_external_description(user_id: uuid.UUID, webhook_id) -> str:
+    return f"Auth Service: user {user_id} webhook {webhook_id}"
+
+
 async def generate_webhook(
     user_id: uuid.UUID, webhook_request_info: WebhookRequest
 ) -> WebhookPublicPublic:
@@ -76,12 +80,12 @@ async def generate_webhook(
 
     webhook_id = uuid.uuid4()
     events_service_webhook = await get_events_service_client().add_webhook(
-        webhook_url=webhook_request_info.url,
+        webhook_url=webhook_request_info.url_str,
         chains=webhook_request_info.chains,
         events=webhook_request_info.events,
         is_active=webhook_request_info.is_active,
         authorization=webhook_request_info.authorization,
-        description=f"Auth Service: user {user_id} webhook {webhook_id}",
+        description=_get_external_description(user_id, webhook_id),
     )
     db_webhook = Webhook(
         id=webhook_id,
@@ -116,12 +120,13 @@ async def update_webhook_by_ids(
         return False
 
     await get_events_service_client().update_webhook(
-        webhook_id=webhook_id,
-        webhook_url=webhook_request_info.url,
+        webhook_id=stored_webhook.external_webhook_id,
+        webhook_url=webhook_request_info.url_str,
         chains=webhook_request_info.chains,
         events=webhook_request_info.events,
         is_active=webhook_request_info.is_active,
         authorization=webhook_request_info.authorization,
+        description=_get_external_description(user_id, webhook_id),
     )
     stored_webhook.description = webhook_request_info.description
     await stored_webhook.update()

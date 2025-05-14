@@ -36,11 +36,11 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         description = "Test webhook"
 
         result = await self.events_service_client.add_webhook(
-            webhook_url, chains, events, True, authorization, description
+            webhook_url, chains, events, description, True, authorization
         )
 
         mock_post.assert_called_with(
-            "http:///api/v1/webhooks",
+            "http:///webhooks",
             json={
                 "url": "http://example.com",
                 "chains": [1, 2],
@@ -67,7 +67,9 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         mock_post.return_value = mock_response
 
         with self.assertRaises(EventsServiceRequestError):
-            await self.events_service_client.add_webhook(webhook_url, chains, events)
+            await self.events_service_client.add_webhook(
+                webhook_url, chains, events, description
+            )
 
     @mock.patch.object(aiohttp.ClientSession, "get", new_callable=AsyncMock)
     async def test_get_webhook(self, mock_get):
@@ -81,7 +83,7 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         result = await self.events_service_client.get_webhook(webhook_id)
 
         mock_get.assert_called_with(
-            f"http:///api/v1/webhooks/{webhook_id}",
+            f"http:///webhooks/{webhook_id}",
             json=None,
             headers={},
             timeout=mock.ANY,
@@ -111,7 +113,7 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         result = await self.events_service_client.delete_webhook(webhook_id)
 
         mock_delete.assert_called_with(
-            f"http:///api/v1/webhooks/{webhook_id}",
+            f"http:///webhooks/{webhook_id}",
             json=None,
             headers={},
             timeout=mock.ANY,
@@ -141,16 +143,19 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         chains = [3, 4]
         events = [WebhookEventType.SEND_TOKEN_TRANSFERS]
         is_active = False
+        description = "Test webhook"
 
         result = await self.events_service_client.update_webhook(
-            webhook_id, webhook_url, chains, events, is_active
+            webhook_id, webhook_url, chains, events, description, is_active
         )
         mock_put.assert_called_with(
-            f"http:///api/v1/webhooks/{webhook_id}",
+            f"http:///webhooks/{webhook_id}",
             json={
                 "url": "http://new-url.com",
                 "chains": [3, 4],
                 "events": ["SEND_TOKEN_TRANSFERS"],
+                "description": "Test webhook",
+                "authorization": "",
                 "isActive": False,
             },
             headers={"Content-Type": "application/json"},
@@ -166,5 +171,5 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
 
         with self.assertRaises(EventsServiceRequestError):
             await self.events_service_client.update_webhook(
-                webhook_id, webhook_url, chains, events
+                webhook_id, webhook_url, chains, events, description
             )
