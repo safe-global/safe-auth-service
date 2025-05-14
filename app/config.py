@@ -97,7 +97,22 @@ LOGGING_CONFIG = {
             "level": settings.LOG_LEVEL,
             "handlers": ["console"],
             "propagate": False,
-        }
+        },
+        "uvicorn": {
+            "handlers": ["console"],
+            "level": settings.LOG_LEVEL,
+            "propagate": False,
+        },
+        "uvicorn.error": {
+            "handlers": ["console"],
+            "level": settings.LOG_LEVEL,
+            "propagate": False,
+        },
+        "uvicorn.access": {
+            "handlers": ["console"],
+            "level": settings.LOG_LEVEL,
+            "propagate": False,
+        },
     },
 }
 
