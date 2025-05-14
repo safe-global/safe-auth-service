@@ -181,7 +181,7 @@ class EventsServiceClient:
             authorization=webhook_data["authorization"],
             chains=webhook_data["chains"],
             events=[WebhookEventType(event) for event in webhook_data["events"]],
-            active=webhook_data["isActive"],
+            is_active=webhook_data["isActive"],
         )
 
     async def add_webhook(
@@ -189,7 +189,7 @@ class EventsServiceClient:
         webhook_url: str,
         chains: list[int],
         events: list[WebhookEventType],
-        active: bool = True,
+        is_active: bool = True,
         authorization: str | None = None,
         description: str | None = None,
     ) -> WebhookEventsService:
@@ -200,7 +200,7 @@ class EventsServiceClient:
             webhook_url: The URL to send webhook events to.
             chains: The list of chain IDs associated with the webhook.
             events: The list of events that trigger the webhook.
-            active: Whether the webhook is active (default is True).
+            is_active: Whether the webhook is active (default is True).
             authorization: An optional authorization token for the webhook.
             description: An optional description for the webhook.
 
@@ -214,7 +214,7 @@ class EventsServiceClient:
             "url": webhook_url,
             "chains": chains,
             "events": [event.value for event in events],
-            "active": active,
+            "isActive": is_active,
         }
 
         if authorization:
@@ -253,7 +253,7 @@ class EventsServiceClient:
         webhook_url: str,
         chains: list[int],
         events: list[WebhookEventType],
-        active: bool = True,
+        is_active: bool = True,
         authorization: str | None = None,
     ) -> bool:
         """
@@ -264,7 +264,7 @@ class EventsServiceClient:
             webhook_url: The new URL for the webhook.
             chains: The updated list of chain IDs associated with the webhook.
             events: The updated list of events that trigger the webhook.
-            active: Whether the webhook is active (default is True).
+            is_active: Whether the webhook is active (default is True).
             authorization: An optional new authorization token for the webhook.
 
         Returns:
@@ -278,7 +278,7 @@ class EventsServiceClient:
             "url": webhook_url,
             "chains": chains,
             "events": [event.value for event in events],
-            "isActive": active,
+            "isActive": is_active,
         }
 
         if authorization:

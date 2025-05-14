@@ -45,7 +45,7 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
                 "url": "http://example.com",
                 "chains": [1, 2],
                 "events": ["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"],
-                "active": True,
+                "isActive": True,
                 "authorization": "Bearer token",
                 "description": "Test webhook",
             },
@@ -58,7 +58,7 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         self.assertEqual(result.authorization, authorization)
         self.assertEqual(result.chains, chains)
         self.assertEqual(result.events, events)
-        self.assertTrue(result.active)
+        self.assertTrue(result.is_active)
 
         mock_response = AsyncMock()
         mock_response.ok = False
@@ -98,7 +98,7 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
         )
-        self.assertTrue(result.active)
+        self.assertTrue(result.is_active)
 
     @mock.patch.object(aiohttp.ClientSession, "delete", new_callable=AsyncMock)
     async def test_delete_webhook(self, mock_delete):
@@ -140,10 +140,10 @@ class TestPrometheusClient(IsolatedAsyncioTestCase):
         webhook_url = "http://new-url.com"
         chains = [3, 4]
         events = [WebhookEventType.SEND_TOKEN_TRANSFERS]
-        active = False
+        is_active = False
 
         result = await self.events_service_client.update_webhook(
-            webhook_id, webhook_url, chains, events, active
+            webhook_id, webhook_url, chains, events, is_active
         )
         mock_put.assert_called_with(
             f"http:///api/v1/webhooks/{webhook_id}",

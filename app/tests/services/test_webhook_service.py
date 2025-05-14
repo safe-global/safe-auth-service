@@ -45,7 +45,7 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_TOKEN_TRANSFERS,
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
-            active=True,
+            is_active=True,
             id=mock_events_service_webhook_id,
         )
 
@@ -58,7 +58,7 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_TOKEN_TRANSFERS,
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
-            active=True,
+            is_active=True,
         )
 
         generated_webhook = await generate_webhook(user.id, create_webhook_request)
@@ -80,12 +80,12 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
         )
-        self.assertTrue(generated_webhook.active)
+        self.assertTrue(generated_webhook.is_active)
         mock_add_webhook.assert_called_once_with(
             webhook_url="http://example.com",
             chains=[1, 2],
             events=["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"],
-            active=True,
+            is_active=True,
             authorization="some-authorization",
             description=f"Auth Service: user {user.id} webhook {generated_webhook.id}",
         )
@@ -130,7 +130,7 @@ class TestWebhookService(AsyncDbTestCase):
             authorization="new-authorization",
             chains=[3, 4],
             events=[WebhookEventType.SEND_CONFIRMATIONS],
-            active=False,
+            is_active=False,
         )
         updated = await update_webhook_by_ids(
             uuid.uuid4(), user.id, updated_webhook_request
@@ -154,7 +154,7 @@ class TestWebhookService(AsyncDbTestCase):
             webhook_url="http://new-url.com",
             chains=[3, 4],
             events=["SEND_CONFIRMATIONS"],
-            active=False,
+            is_active=False,
             authorization="new-authorization",
         )
         updated_webhook = await Webhook.get_by_ids(generated_webhook.id, user.id)
@@ -175,7 +175,7 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_TOKEN_TRANSFERS,
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
-            active=True,
+            is_active=True,
             id=generated_webhook.external_webhook_id,
         )
 
@@ -192,7 +192,7 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
         )
-        self.assertTrue(webhooks[0].active)
+        self.assertTrue(webhooks[0].is_active)
 
         mock_get_webhook.assert_called_once_with(generated_webhook.external_webhook_id)
 
@@ -213,7 +213,7 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_TOKEN_TRANSFERS,
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
-            active=True,
+            is_active=True,
             id=generated_webhook.external_webhook_id,
         )
 
@@ -231,6 +231,6 @@ class TestWebhookService(AsyncDbTestCase):
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
         )
-        self.assertTrue(retrieved_webhook.active)
+        self.assertTrue(retrieved_webhook.is_active)
 
         mock_get_webhook.assert_called_once_with(generated_webhook.external_webhook_id)

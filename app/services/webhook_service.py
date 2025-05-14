@@ -48,7 +48,7 @@ def _parse_webhook_public(
         authorization=events_service_webhook.authorization,
         chains=events_service_webhook.chains,
         events=events_service_webhook.events,
-        active=events_service_webhook.active,
+        is_active=events_service_webhook.is_active,
     )
 
 
@@ -79,7 +79,7 @@ async def generate_webhook(
         webhook_url=webhook_request_info.url,
         chains=webhook_request_info.chains,
         events=webhook_request_info.events,
-        active=webhook_request_info.active,
+        is_active=webhook_request_info.is_active,
         authorization=webhook_request_info.authorization,
         description=f"Auth Service: user {user_id} webhook {webhook_id}",
     )
@@ -120,7 +120,7 @@ async def update_webhook_by_ids(
         webhook_url=webhook_request_info.url,
         chains=webhook_request_info.chains,
         events=webhook_request_info.events,
-        active=webhook_request_info.active,
+        is_active=webhook_request_info.is_active,
         authorization=webhook_request_info.authorization,
     )
     stored_webhook.description = webhook_request_info.description

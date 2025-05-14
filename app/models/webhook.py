@@ -27,7 +27,7 @@ class WebhookEventsService(BaseModel):
     authorization: str | None
     chains: list[int]
     events: list[WebhookEventType]
-    active: bool
+    is_active: bool
 
 
 class WebhookRequest(BaseModel):
@@ -36,7 +36,7 @@ class WebhookRequest(BaseModel):
     authorization: str | None = Field(default=None)
     chains: list[int] = Field(min_length=0)
     events: list[WebhookEventType]
-    active: bool = Field(default=True)
+    is_active: bool = Field(default=True)
 
 
 class WebhookPublicPublic(BaseModel):
@@ -50,4 +50,4 @@ class WebhookPublicPublic(BaseModel):
     authorization: str | None
     chains: list[int]
     events: list[WebhookEventType]
-    active: bool
+    is_active: bool

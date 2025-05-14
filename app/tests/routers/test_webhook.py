@@ -51,7 +51,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
                 WebhookEventType.SEND_TOKEN_TRANSFERS,
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
-            active=True,
+            is_active=True,
         )
 
         create_webhook_request = {
@@ -60,7 +60,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
             "authorization": "some-authorization",
             "chains": [1, 2],
             "events": ["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"],
-            "active": True,
+            "is_active": True,
         }
 
         response = await self.client.post(
@@ -78,7 +78,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
         self.assertEqual(
             webhook["events"], ["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"]
         )
-        self.assertTrue(webhook["active"])
+        self.assertTrue(webhook["is_active"])
         mock_generate_webhook.assert_called_once()
 
     @mock.patch(
@@ -94,7 +94,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
             "authorization": "new-authorization",
             "chains": [3, 4],
             "events": ["SEND_CONFIRMATIONS"],
-            "active": False,
+            "is_active": False,
         }
 
         response = await self.client.put(
@@ -113,7 +113,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
                 authorization="new-authorization",
                 chains=[3, 4],
                 events=[WebhookEventType.SEND_CONFIRMATIONS],
-                active=False,
+                is_active=False,
             ),
         )
 
@@ -161,7 +161,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
                 WebhookEventType.SEND_TOKEN_TRANSFERS,
                 WebhookEventType.SEND_CONFIRMATIONS,
             ],
-            active=True,
+            is_active=True,
         )
         mock_get_webhook.return_value = mock_webhook
 
@@ -179,7 +179,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
         self.assertEqual(
             webhook["events"], ["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"]
         )
-        self.assertTrue(webhook["active"])
+        self.assertTrue(webhook["is_active"])
         mock_get_webhook.assert_called_once_with(mock_webhook.id, self.user.id)
 
         mock_get_webhook.return_value = None
@@ -207,7 +207,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
                     WebhookEventType.SEND_TOKEN_TRANSFERS,
                     WebhookEventType.SEND_CONFIRMATIONS,
                 ],
-                active=True,
+                is_active=True,
             )
         ]
         mock_get_webhooks_by_user.return_value = mock_webhooks
@@ -227,7 +227,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
         self.assertEqual(
             webhooks[0]["events"], ["SEND_TOKEN_TRANSFERS", "SEND_CONFIRMATIONS"]
         )
-        self.assertTrue(webhooks[0]["active"])
+        self.assertTrue(webhooks[0]["is_active"])
         mock_get_webhooks_by_user.assert_called_once_with(self.user.id)
 
         mock_get_webhooks_by_user.return_value = []
