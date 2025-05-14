@@ -58,5 +58,34 @@ print(users[0].email)
 ```
 Call `await restore_session()` to reopen a new session.
 
+## Test full workflow locally
+
+```bash
+cp .env.docker .env
+docker compose pull
+docker compose up -d
+```
+
+Once everything is ready, go to http://localhost:9000/ to configure **Apisix** using the Dashboard:
+1. Credentials are `admin:dashboard`.
+2. Go to **plugin** and enable `jwt-auth` and `prometheus`.
+3. Configure an **upstream** (remember to set `Hostname` to `Use the domain or IP from Node List`), and then configure
+a **route** pointing to the **upstream**.
+4. Test the route `curl http://127.0.0.1:9080/`
+
+After **Apisix** is configured, time to create a user to interact with it. Go to http://localhost:8000/ for
+the **Safe Auth Service API**:
+1. Call `preregister` endpoint. Any email will do.
+2. Go to the email local server on http://localhost:2526/ , and check the token.
+3. Use the `register` endpoint with the token.
+4. With the `password` and `email`, `login` (swagger has a very convenient `authorize` button on top right).
+5. Create an api key using POST `/api-keys` endpoint. Set a good description that will appear lately on the Apisix consumers panel.
+Note the `key` attribute, it's the `JWT` token to use it with Apisix.
+6. Call apisix route using `curl -H "Authorization: $JWT_KEY" 'http://127.0.0.1:9080/'`
+
+You can go now to the **Apisix** dashboard and check the consumers, and also to **Prometheus**
+on http://localhost:9090/ and query the monitoring data, for example using the key `apisix_http_status`.
+
+
 ## Contributors
 [See contributors](https://github.com/safe-global/safe-auth-service/graphs/contributors)

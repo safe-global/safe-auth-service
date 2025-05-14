@@ -82,7 +82,7 @@ services:
     volumes:
       - ./docker/apisix_dashboard/config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
     depends_on:
-      - etcd
+      - apisix
     ports:
       - "9000:9000/tcp"
 

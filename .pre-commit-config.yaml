@@ -27,7 +27,7 @@ repos:
       - id: check-merge-conflict
       - id: debug-statements
       - id: detect-private-key
-        exclude: ^.env.test$
+        exclude: ^.env.*
       - id: requirements-txt-fixer
       - id: trailing-whitespace
       - id: end-of-file-fixer
