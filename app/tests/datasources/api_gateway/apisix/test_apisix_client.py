@@ -108,7 +108,7 @@ class TestApisixClient(IsolatedAsyncioTestCase):
                     "policy": "local",
                     "time_window": 1,
                     "key_type": "var",
-                    "key": "consumer_group_name",
+                    "key": "consumer_group_id",
                     "allow_degradation": False,
                 }
             },
