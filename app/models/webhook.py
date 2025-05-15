@@ -6,14 +6,14 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class WebhookEventType(str, Enum):
-    SEND_CONFIRMATIONS = ("SEND_CONFIRMATIONS",)
-    SEND_MULTISIG_TXS = ("SEND_MULTISIG_TXS",)
-    SEND_ETHER_TRANSFERS = ("SEND_ETHER_TRANSFERS",)
-    SEND_TOKEN_TRANSFERS = ("SEND_TOKEN_TRANSFERS",)
-    SEND_MODULE_TXS = ("SEND_MODULE_TXS",)
-    SEND_SAFE_CREATIONS = ("SEND_SAFE_CREATIONS",)
-    SEND_MESSAGES = ("SEND_MESSAGES",)
-    SEND_REORGS = ("SEND_REORGS",)
+    SEND_CONFIRMATIONS = "SEND_CONFIRMATIONS"
+    SEND_MULTISIG_TXS = "SEND_MULTISIG_TXS"
+    SEND_ETHER_TRANSFERS = "SEND_ETHER_TRANSFERS"
+    SEND_TOKEN_TRANSFERS = "SEND_TOKEN_TRANSFERS"
+    SEND_MODULE_TXS = "SEND_MODULE_TXS"
+    SEND_SAFE_CREATIONS = "SEND_SAFE_CREATIONS"
+    SEND_MESSAGES = "SEND_MESSAGES"
+    SEND_REORGS = "SEND_REORGS"
     SEND_DELEGATES = "SEND_DELEGATES"
 
 
@@ -43,7 +43,7 @@ class WebhookRequest(BaseModel):
         return str(self.url)
 
 
-class WebhookPublicPublic(BaseModel):
+class WebhookPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID

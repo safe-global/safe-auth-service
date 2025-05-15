@@ -14,12 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 @cache
-def get_events_service_client(request_timeout: int = 10) -> "EventsServiceClient":
+def get_events_service_client() -> "EventsServiceClient":
     """
     Creates and returns an EventsServiceClient instance.
-
-    Args:
-        request_timeout: The timeout (in seconds) for HTTP requests.
 
     Returns:
         An instance of EventsServiceClient.
@@ -28,7 +25,7 @@ def get_events_service_client(request_timeout: int = 10) -> "EventsServiceClient
         base_url=settings.EVENTS_SERVICE_BASE_URL,
         api_key=settings.EVENTS_SERVICE_API_KEY,
         connections_pool_size=settings.EVENTS_SERVICE_CONNECTIONS_POOL_SIZE,
-        request_timeout=request_timeout,
+        request_timeout=settings.EVENTS_SERVICE_REQUEST_TIMEOUT,
     )
 
 
@@ -101,7 +98,7 @@ class EventsServiceClient:
 
     async def _get_request(self, url: str) -> aiohttp.ClientResponse:
         """
-        Sends a GET request.
+        Sends a GET request to events service.
 
         Args:
             url: The URL to send the GET request to.
@@ -118,7 +115,7 @@ class EventsServiceClient:
         self, url: str, payload: dict[str, Any]
     ) -> aiohttp.ClientResponse:
         """
-        Sends a PUT request.
+        Sends a PUT request to events service.
 
         Args:
             url: The URL to send the PUT request to.
@@ -136,7 +133,7 @@ class EventsServiceClient:
         self, url: str, payload: dict[str, Any]
     ) -> aiohttp.ClientResponse:
         """
-        Sends a POST request.
+        Sends a POST request to events service.
 
         Args:
             url: The URL to send the POST request to.
@@ -152,7 +149,7 @@ class EventsServiceClient:
 
     async def _delete_request(self, url: str) -> aiohttp.ClientResponse:
         """
-        Sends a DELETE request.
+        Sends a DELETE request to events service.
 
         Args:
             url: The URL to send the DELETE request to.
@@ -200,7 +197,7 @@ class EventsServiceClient:
             webhook_url: The URL to send webhook events to.
             chains: The list of chain IDs associated with the webhook.
             events: The list of events that trigger the webhook.
-            description: An optional description for the webhook.
+            description: A description for the webhook.
             is_active: Whether the webhook is active (default is True).
             authorization: An optional authorization token for the webhook.
 
@@ -261,7 +258,7 @@ class EventsServiceClient:
             webhook_url: The new URL for the webhook.
             chains: The updated list of chain IDs associated with the webhook.
             events: The updated list of events that trigger the webhook.
-            description: An optional description for the webhook.
+            description: A description for the webhook.
             is_active: Whether the webhook is active (default is True).
             authorization: An optional new authorization token for the webhook.
 

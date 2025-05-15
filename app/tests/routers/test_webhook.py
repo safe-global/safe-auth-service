@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 
 from ...datasources.db.connector import db_session_context
 from ...main import app
-from ...models.webhook import WebhookEventType, WebhookPublicPublic, WebhookRequest
+from ...models.webhook import WebhookEventType, WebhookPublic, WebhookRequest
 from ...services.user_service import UserService
 from ..datasources.db.async_db_test_case import AsyncDbTestCase
 from ..datasources.db.factory import generate_random_user
@@ -41,7 +41,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
 
     @mock.patch("app.routers.webhooks.generate_webhook", new_callable=mock.AsyncMock)
     async def test_create_webhook(self, mock_generate_webhook):
-        mock_generate_webhook.return_value = WebhookPublicPublic(
+        mock_generate_webhook.return_value = WebhookPublic(
             id=uuid.uuid4(),
             created=datetime.datetime(2025, 5, 13, 0, 0, 0),
             updated=datetime.datetime(2025, 5, 13, 0, 0, 0),
@@ -151,7 +151,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
 
     @mock.patch("app.routers.webhooks.get_webhook_by_ids", new_callable=mock.AsyncMock)
     async def test_get_webhook(self, mock_get_webhook):
-        mock_webhook = WebhookPublicPublic(
+        mock_webhook = WebhookPublic(
             id=uuid.uuid4(),
             created=datetime.datetime(2025, 5, 13, 0, 0, 0),  # Usar datetime
             updated=datetime.datetime(2025, 5, 13, 0, 0, 0),  # Usar datetime
@@ -197,7 +197,7 @@ class TestRouterWebhookEvents(AsyncDbTestCase):
     )
     async def test_get_webhooks(self, mock_get_webhooks_by_user):
         mock_webhooks = [
-            WebhookPublicPublic(
+            WebhookPublic(
                 id=uuid.uuid4(),
                 created=datetime.datetime(2025, 5, 13, 0, 0, 0),
                 updated=datetime.datetime(2025, 5, 13, 0, 0, 0),

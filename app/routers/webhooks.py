@@ -8,7 +8,7 @@ from starlette import status
 from ..models.webhook import (
     WebhookEventOption,
     WebhookEventType,
-    WebhookPublicPublic,
+    WebhookPublic,
     WebhookRequest,
 )
 from ..services.webhook_service import (
@@ -36,12 +36,10 @@ async def get_webhook_events(
     Returns: List of webhook event options.
 
     """
-    return [WebhookEventOption(name=event.value) for event in WebhookEventType]
+    return WebhookEventType
 
 
-@router.post(
-    "", status_code=status.HTTP_201_CREATED, response_model=WebhookPublicPublic
-)
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=WebhookPublic)
 async def create_webhook(
     webhook_info: WebhookRequest,
     jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
@@ -88,7 +86,7 @@ async def update_webhook(
     return None  # No content response
 
 
-@router.get("/{webhook_id}", response_model=WebhookPublicPublic)
+@router.get("/{webhook_id}", response_model=WebhookPublic)
 async def get_webhook(
     webhook_id: uuid.UUID,
     jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
@@ -108,7 +106,7 @@ async def get_webhook(
     return webhook
 
 
-@router.get("", response_model=list[WebhookPublicPublic])
+@router.get("", response_model=list[WebhookPublic])
 async def get_webhooks(
     jwt_info: Annotated[dict, Depends(get_jwt_info_from_auth_token)],
 ):

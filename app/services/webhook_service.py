@@ -6,7 +6,7 @@ from ..datasources.db.models import Webhook
 from ..datasources.webhooks.events_service.events_service_client import (
     get_events_service_client,
 )
-from ..models.webhook import WebhookEventsService, WebhookPublicPublic, WebhookRequest
+from ..models.webhook import WebhookEventsService, WebhookPublic, WebhookRequest
 
 
 class WebhookServiceException(Exception):
@@ -27,7 +27,7 @@ class WebhookCreationLimitReached(WebhookServiceException):
 
 def _parse_webhook_public(
     model_webhook: Webhook, events_service_webhook: WebhookEventsService
-) -> WebhookPublicPublic:
+) -> WebhookPublic:
     """
     Converts a database model webhook and its corresponding event service webhook
     to a WebhookPublicPublic object for use in public API responses.
@@ -37,9 +37,9 @@ def _parse_webhook_public(
         events_service_webhook: The webhook from the event service.
 
     Returns:
-        WebhookPublicPublic: The WebhookPublicPublic object representing the webhook for the public response.
+        WebhookPublic: The WebhookPublicPublic object representing the webhook for the public response.
     """
-    return WebhookPublicPublic(
+    return WebhookPublic(
         id=model_webhook.id,
         created=model_webhook.created,
         updated=model_webhook.modified,
@@ -52,13 +52,13 @@ def _parse_webhook_public(
     )
 
 
-def _get_external_description(user_id: uuid.UUID, webhook_id) -> str:
+def _get_external_description(user_id: uuid.UUID, webhook_id: uuid.UUID) -> str:
     return f"Auth Service: user {user_id} webhook {webhook_id}"
 
 
 async def generate_webhook(
     user_id: uuid.UUID, webhook_request_info: WebhookRequest
-) -> WebhookPublicPublic:
+) -> WebhookPublic:
     """
     Generates a new webhook for a user, adding it to the event service and creating
     a corresponding entry in the database.
@@ -68,7 +68,7 @@ async def generate_webhook(
         webhook_request_info: The webhook request data including URL, events, etc.
 
     Returns:
-        WebhookPublicPublic: The generated webhook as a WebhookPublicPublic object.
+        WebhookPublic: The generated webhook as a WebhookPublicPublic object.
 
     Raises:
         WebhookCreationLimitReached: If the user has reached the webhook creation limit.
@@ -133,7 +133,7 @@ async def update_webhook_by_ids(
     return True
 
 
-async def get_webhooks_by_user(user_id: uuid.UUID) -> list["WebhookPublicPublic"]:
+async def get_webhooks_by_user(user_id: uuid.UUID) -> list["WebhookPublic"]:
     """
     Retrieves all webhooks associated with a user from both the database and the event service.
 
@@ -141,7 +141,7 @@ async def get_webhooks_by_user(user_id: uuid.UUID) -> list["WebhookPublicPublic"
         user_id: The ID of the user whose webhooks are being retrieved.
 
     Returns:
-        list[WebhookPublicPublic]: A list of WebhookPublicPublic objects representing the user's webhooks.
+        list[WebhookPublic]: A list of WebhookPublicPublic objects representing the user's webhooks.
     """
     db_webhooks = await Webhook.get_webhooks_by_user(user_id)
     retrieve_events_service_webhooks_tasks = [
@@ -159,7 +159,7 @@ async def get_webhooks_by_user(user_id: uuid.UUID) -> list["WebhookPublicPublic"
 
 async def get_webhook_by_ids(
     webhook_id: uuid.UUID, user_id: uuid.UUID
-) -> WebhookPublicPublic | None:
+) -> WebhookPublic | None:
     """
     Retrieves a specific webhook for a user from both the database and the event service.
 
@@ -168,7 +168,7 @@ async def get_webhook_by_ids(
         user_id: The ID of the user who owns the webhook.
 
     Returns:
-        WebhookPublicPublic | None: The corresponding webhook, or None if not found.
+        WebhookPublic | None: The corresponding webhook, or None if not found.
     """
     if (webhook := await Webhook.get_by_ids(webhook_id, user_id)) is not None:
         events_service_webhook = await get_events_service_client().get_webhook(

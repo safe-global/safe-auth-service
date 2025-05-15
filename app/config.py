@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     APISIX_BASE_URL: str = ""
     APISIX_API_KEY: str = ""
     APISIX_CONNECTIONS_POOL_SIZE: int = 100
+    APISIX_REQUEST_TIMEOUT: int = 10
 
     # Apisix Consumer Groups (Payment Plans) ---------------
     APISIX_FREEMIUM_CONSUMER_GROUP_REQUESTS_PER_SECOND_MAX: int = 10
@@ -70,10 +71,12 @@ class Settings(BaseSettings):
     DATADOG_API_KEY: str = ""
     DATADOG_APP_KEY: str = ""
     DATADOG_CONNECTIONS_POOL_SIZE: int = 100
+    DATADOG_REQUEST_TIMEOUT: int = 10
 
     # Prometheus ---------------
     PROMETHEUS_BASE_URL: str = ""
     PROMETHEUS_CONNECTIONS_POOL_SIZE: int = 100
+    PROMETHEUS_REQUEST_TIMEOUT: int = 10
 
     # URLS
     FRONTEND_BASE_URL: str = ""
@@ -83,6 +86,7 @@ class Settings(BaseSettings):
     EVENTS_SERVICE_API_KEY: str = ""
     EVENTS_SERVICE_CONNECTIONS_POOL_SIZE: int = 100
     EVENTS_SERVICE_WEBHOOKS_CREATION_LIMIT: int = 5
+    EVENTS_SERVICE_REQUEST_TIMEOUT: int = 10
 
 
 settings = Settings()

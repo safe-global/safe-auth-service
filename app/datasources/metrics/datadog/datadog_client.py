@@ -11,12 +11,9 @@ from ....models.metrics import TimeSeriesMetricData
 
 
 @cache
-def get_datadog_client(request_timeout: int = 10) -> "DatadogClient":
+def get_datadog_client() -> "DatadogClient":
     """
     Creates and returns a DatadogClient instance.
-
-    Args:
-        request_timeout: The timeout (in seconds) for HTTP requests.
 
     Returns:
         An instance of DatadogClient.
@@ -26,7 +23,7 @@ def get_datadog_client(request_timeout: int = 10) -> "DatadogClient":
         api_key=settings.DATADOG_API_KEY,
         app_key=settings.DATADOG_APP_KEY,
         connections_pool_size=settings.DATADOG_CONNECTIONS_POOL_SIZE,
-        request_timeout=request_timeout,
+        request_timeout=settings.DATADOG_REQUEST_TIMEOUT,
     )
 
 
