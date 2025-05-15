@@ -15,7 +15,7 @@ from .datasources.db.connector import (
     set_database_session_context,
 )
 from .loggers.safe_logger import HttpRequestLog, HttpResponseLog
-from .routers import about, api_keys, default, google, users
+from .routers import about, api_keys, default, google, users, webhooks
 from .routers.exceptions_handler import register_exception_handlers
 
 logger = logging.getLogger()
@@ -64,6 +64,7 @@ api_v1_router.include_router(about.router)
 api_v1_router.include_router(api_keys.router)
 api_v1_router.include_router(google.router)
 api_v1_router.include_router(users.router)
+api_v1_router.include_router(webhooks.router)
 app.include_router(api_v1_router)
 app.include_router(default.router)
 

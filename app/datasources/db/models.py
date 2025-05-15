@@ -157,3 +157,66 @@ class ApiKey(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
         query = select(cls).where(cls.user_id == user_id)
         result = await db_session.execute(query)
         return result.scalars().all()
+
+
+class Webhook(SqlQueryBase, TimeStampedSQLModel, SQLModel, table=True):
+    id: uuid.UUID = Field(primary_key=True)
+    user_id: uuid.UUID = Field(nullable=False, foreign_key="user.id")
+    description: str = Field(nullable=True, max_length=200)
+    external_webhook_id: uuid.UUID = Field(nullable=False, unique=True)
+
+    @classmethod
+    async def get_by_ids(cls, webhook_id: uuid.UUID, user_id: uuid.UUID):
+        """
+        Get a Webhook by webhook id and user id.
+
+        Args:
+            webhook_id:
+            user_id:
+
+        Returns: Webhook instance.
+
+        """
+        query = select(cls).where(cls.user_id == user_id).where(cls.id == webhook_id)
+        result = await db_session.execute(query)
+
+        if webhook := result.scalars().first():
+            return webhook
+
+        return None
+
+    @classmethod
+    async def delete_by_ids(cls, webhook_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        """
+        Delete an Webhook by webhook id and user id.
+
+        Args:
+            webhook_id:
+            user_id:
+
+        Returns: True if deleted False otherwise.
+
+        """
+        query = (
+            delete(cls)
+            .where(col(cls.user_id) == user_id)
+            .where(col(cls.id) == webhook_id)
+        )
+        result = await db_session.execute(query)
+        await db_session.commit()
+        return True if result.rowcount == 1 else False
+
+    @classmethod
+    async def get_webhooks_by_user(cls, user_id: uuid.UUID) -> Sequence["Webhook"]:
+        """
+        Get a list of Webhook by user id.
+
+        Args:
+            user_id:
+
+        Returns: List of Webhooks.
+
+        """
+        query = select(cls).where(cls.user_id == user_id)
+        result = await db_session.execute(query)
+        return result.scalars().all()

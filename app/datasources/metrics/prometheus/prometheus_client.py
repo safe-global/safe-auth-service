@@ -14,12 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 @cache
-def get_prometheus_client(request_timeout: int = 10) -> "PrometheusClient":
+def get_prometheus_client() -> "PrometheusClient":
     """
     Creates and returns a PrometheusClient instance.
-
-    Args:
-        request_timeout: The timeout (in seconds) for HTTP requests.
 
     Returns:
         An instance of PrometheusClient.
@@ -27,7 +24,7 @@ def get_prometheus_client(request_timeout: int = 10) -> "PrometheusClient":
     return PrometheusClient(
         base_url=settings.PROMETHEUS_BASE_URL,
         connections_pool_size=settings.PROMETHEUS_CONNECTIONS_POOL_SIZE,
-        request_timeout=request_timeout,
+        request_timeout=settings.PROMETHEUS_REQUEST_TIMEOUT,
     )
 
 
